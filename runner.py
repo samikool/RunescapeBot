@@ -1,9 +1,11 @@
 import sys
+import os
+if(os.name == 'nt'):
+    import win32.win32gui as win32gui
 from time import sleep
-import win32.win32gui as win32gui
 
-print(sys.path)
+
+print(os.name)
 
 while(True):
-    print(win32gui.GetForegroundWindow())
     sleep(3)
