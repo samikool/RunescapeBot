@@ -1,0 +1,2 @@
+#List in here the modules that need to be installed 
+pyautogui
