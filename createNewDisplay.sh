@@ -3,6 +3,7 @@ numBots=$1
 time=5
 
 killall -15 Xvfb
+killall -15 java
 
 echo initializing directories
 for ((i=1; i<=$numBots; i++))
