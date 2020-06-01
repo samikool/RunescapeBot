@@ -1,3 +1,0 @@
-[submodule "yolo/data/coco"]
-	path = yolo/data/coco
-	url = http://github.com/pdollar/coco
