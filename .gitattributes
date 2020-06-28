@@ -4,3 +4,5 @@
 *.json filter=lfs diff=lfs merge=lfs -text
 .png filter=lfs diff=lfs merge=lfs -text
 .pt filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
