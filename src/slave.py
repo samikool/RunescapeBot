@@ -4,3 +4,4 @@ class slave:
         self.y=y
     def getVal(self):
         return self.x
+
