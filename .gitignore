@@ -1,3 +1,5 @@
 __pycache__/
 runs/
 __init__.py
+raw_images/
+raw_videos/
