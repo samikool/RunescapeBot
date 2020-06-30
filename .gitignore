@@ -3,6 +3,6 @@ runs/
 __init__.py
 raw_images/
 raw_videos/
-!*/raw_videos/converToImages.py
+!*/raw_videos/convertToImages.py
 *.zip
 weights/
