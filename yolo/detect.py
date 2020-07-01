@@ -19,7 +19,8 @@ class rune_model:
                 conf_thres=0.3, 
                 iou_thres=0.6, 
                 fourcc='mp4v', 
-                half=False, device='', 
+                half=False, 
+                device='', 
                 view_img=False, 
                 save_txt=False, 
                 classes='', 
@@ -88,93 +89,6 @@ class rune_model:
         colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
         self.stuff = {'imgsz':imgsz, 'names':names, 'colors':colors, 'device':device, 'model':model, 'opt':opt, 'dataset':dataset, 'webcam':webcam, 'out':out, 'save_txt':save_txt, 'save_img':save_img, 'view_img':view_img}
-    
-    def detect(self):
-        #Run inference
-        t0 = time.time()
-        img = torch.zeros((1, 3, self.stuff['imgsz'], self.stuff['imgsz']), device=self.stuff['device'])  # init img
-        _ = self.stuff['model'](img.float()) if self.stuff['device'].type != 'cpu' else None  # run once
-        count = 0
-        for path, img, im0s, vid_cap in self.stuff['dataset']:
-            self.detect1(img, im0s, count)
-            count+=1
-            img = torch.from_numpy(img).to(self.stuff['device'])
-            img = img.float()  # uint8 to fp16/32
-            img /= 255.0  # 0 - 255 to 0.0 - 1.0
-            if img.ndimension() == 3:
-                img = img.unsqueeze(0)
-
-            # Inference
-            t1 = torch_utils.time_synchronized()
-            pred = self.stuff['model'](img, augment=self.opt.augment)[0]
-            t2 = torch_utils.time_synchronized()
-
-            # Apply NMS
-            pred = non_max_suppression(pred, self.opt.conf_thres, self.opt.iou_thres,
-                                    multi_label=False, classes=self.opt.classes, agnostic=self.opt.agnostic_nms)
-
-            # Process detections
-            for i, det in enumerate(pred):  # detections for image i
-                if self.stuff['webcam']:  # batch_size >= 1
-                    p, s, im0 = path[i], '%g: ' % i, im0s[i].copy()
-                else:
-                    p, s, im0 = path, '', im0s
-
-                save_path = str(Path(self.stuff['out']) / Path(p).name)
-                s += '%gx%g ' % img.shape[2:]  # print string
-                gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  #  normalization gain whwh
-                if det is not None and len(det):
-                    # Rescale boxes from imgsz to im0 size
-                    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-
-                    # Print results
-                    for c in det[:, -1].unique():
-                        n = (det[:, -1] == c).sum()  # detections per class
-                        s += '%g %ss, ' % (n, self.stuff['names'][int(c)])  # add to string
-
-                    # Write results
-                    for *xyxy, conf, cls in det:
-                        if self.stuff['save_txt']:  # Write to file
-                            xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
-                            with open(save_path[:save_path.rfind('.')] + '.txt', 'a') as file:
-                                file.write(('%g ' * 5 + '\n') % (cls, *xywh))  # label format
-
-                        if self.stuff['save_img'] or self.stuff['view_img']:  # Add bbox to image
-                            label = '%s %.2f' % (self.stuff['names'][int(cls)], conf)
-                            plot_one_box(xyxy, im0, label=label, color=self.stuff['colors'][int(cls)])
-
-                # Print time (inference + NMS)
-                print('%sDone. (%.3fs)' % (s, t2 - t1))
-
-                # Stream results
-                if self.stuff['view_img']:
-                    cv2.imshow(p, im0)
-                    if cv2.waitKey(1) == ord('q'):  # q to quit
-                        raise StopIteration
-
-                # Save results (image with detections)
-                if self.stuff['save_img']:
-                    if self.stuff['dataset'].mode == 'images':
-                        cv2.imwrite(save_path, im0)
-                    else:
-                        if vid_path != save_path:  # new video
-                            vid_path = save_path
-                            if isinstance(vid_writer, cv2.VideoWriter):
-                                vid_writer.release()  # release previous video writer
-
-                            fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                            w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                            h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                            vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*self.opt.fourcc), fps, (w, h))
-                        vid_writer.write(im0)
-            
-
-        if self.stuff['save_txt'] or self.stuff['save_img']:
-            print('Results saved to %s' % os.getcwd() + os.sep + self.stuff['out'])
-            if platform == 'darwin':  # MacOS
-                os.system('open ' + save_path)
-
-        print('Done. (%.3fs)' % (time.time() - t0))
 
     def detect1(self, imgg, im0s, count):
         #Run inference

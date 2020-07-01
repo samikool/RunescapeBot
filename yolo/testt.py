@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 import imutils
-from detect import rune_model
+from runemodel import rune_model
 from time import sleep
 
 def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
@@ -58,7 +58,7 @@ img = letterbox(img0, new_shape=416)[0]
 img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
 img = np.ascontiguousarray(img)
 
-rune_modell.detect1(img, img0, 0)
+rune_modell.detect(img, img0, 0)
 
 # cv2.imshow("Screenshot", imutils.resize(screenshot, width=416))
 # cv2.waitKey(0)
