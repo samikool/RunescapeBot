@@ -10,11 +10,13 @@ from time import sleep
 class master:
     server = server('0.0.0.0', 4000)
     bots=[]
+    
     def __init__(self, numbots):
         pass
     def start(self):
-        self.server.start()
-        
+        server_thread = threading.Thread(target=self.server.start)
+
+
         
 if(__name__ == '__main__'):
     parser = argparse.ArgumentParser()
