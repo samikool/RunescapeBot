@@ -40,7 +40,7 @@ def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scale
 
 rune_modell = rune_model(cfg='cfg/yolov3-spp.cfg', 
                         names='data/custom/custom.names', 
-                        weights='weights/last.pt', 
+                        weights='weights/best.pt', 
                         source='data/custom/test_images')
 
 rune_modell.load(rune_modell.opt)

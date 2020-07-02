@@ -1,3 +1,5 @@
+
+
 import sys
 import os
 import subprocess
@@ -26,5 +28,7 @@ def startClient(numBots):
 
     print(str(numBots) + ' clients started' )
 
-createDisplays(numBots)
-startClient(numBots)
+def startBots(numBots):
+    createDisplays(numBots)
+    startClient(numBots)
+

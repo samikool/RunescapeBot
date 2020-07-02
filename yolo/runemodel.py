@@ -106,7 +106,6 @@ class rune_model:
                                 
         # Process detections
         for i, det in enumerate(pred):  # detections for image i
-
             s, im0 = '', im0s
             s += '%gx%g ' % img.shape[2:]  # print string
 
@@ -116,15 +115,28 @@ class rune_model:
                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
 
                 # Print results
-                for c in det[:, -1].unique():
-                    n = (det[:, -1] == c).sum()  # detections per class
-                    s += '%g %ss, ' % (n, self.stuff['names'][int(c)])  # add to string
+                # for c in det[:, -1].unique():
+                #     n = (det[:, -1] == c).sum()  # detections per class
+                #     s += '%g %ss, ' % (n, self.stuff['names'][int(c)])  # add to string
 
-                # Write results
+                objects={}
+                j=0
+                # Write results 
                 for *xyxy, conf, cls in det:
+                    objects[j] = {}
+                    objects[j]['top'] = xyxy[0].item()
+                    objects[j]['left'] = xyxy[1].item()
+                    objects[j]['bottom'] = xyxy[2].item()
+                    objects[j]['right'] = xyxy[3].item()
+                    objects[j]['class'] = self.stuff['names'][int(cls)]
+                    j+=1
+
                     if self.stuff['save_img'] or self.stuff['view_img']:  # Add bbox to image
                         label = '%s %.2f' % (self.stuff['names'][int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=self.stuff['colors'][int(cls)])
+                
+                print(objects)
+                
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
@@ -133,4 +145,3 @@ class rune_model:
             cv2.imwrite('output/screenshot'+str(count)+'.png', im0)
 
         print('Done. (%.3fs)' % (time.time() - t0))
-        input()
