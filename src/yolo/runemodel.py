@@ -1,8 +1,8 @@
 import argparse
 
-from models import *
-from utils.datasets import *
-from utils.utils import *
+from yolo.models import *
+from yolo.utils.datasets import *
+from yolo.utils.utils import *
 
 from time import sleep
 
@@ -10,11 +10,11 @@ class rune_model:
     opt = {}
     stuff = {}
     def __init__(self, 
-                cfg='cfg/yolov3-spp.cfg', 
-                names='data/custom/custom.names', 
-                weights='weights/best.pt', 
-                source='data/custom/test_images', 
-                output='output', 
+                cfg='yolo/cfg/yolov3-spp.cfg', 
+                names='yolo/data/custom/custom.names', 
+                weights='yolo/weights/best.pt', 
+                source='yolo/data/custom/test_images', 
+                output='yolo/output', 
                 img_size=512, 
                 conf_thres=0.3, 
                 iou_thres=0.6, 

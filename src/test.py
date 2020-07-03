@@ -3,7 +3,7 @@ import os
 import cv2
 import numpy as np
 import imutils
-from runemodel import rune_model
+from yolo.runemodel import rune_model
 from time import sleep
 
 def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
@@ -38,10 +38,10 @@ def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scale
     img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=color)  # add border
     return img, ratio, (dw, dh)
 
-rune_modell = rune_model(cfg='cfg/yolov3-spp.cfg', 
-                        names='data/custom/custom.names', 
-                        weights='weights/best.pt', 
-                        source='data/custom/test_images')
+rune_modell = rune_model(cfg='yolo/cfg/yolov3-spp.cfg', 
+                        names='yolo/data/custom/custom.names', 
+                        weights='yolo/weights/best.pt', 
+                        source='yolo/data/custom/test_images')
 
 rune_modell.load(rune_modell.opt)
 
