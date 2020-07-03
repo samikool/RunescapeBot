@@ -1,9 +1,6 @@
-# Python TCP Client A
 import socket 
 
-# tcpClientA = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-# tcpClientA.connect((host, port))
-# tcpClientA.close() 
+from time import sleep
 
 class Connection:
     def __init__(self, host, port, BUFFER_SIZE=2000):
@@ -15,9 +12,20 @@ class Connection:
     def connect(self):
         self.socket.connect((self.host, self.port))
 
+    def initConnection(self):
+        INIT_MESSAGE = 'init'
+        INIT_MESSAGE = INIT_MESSAGE.encode('utf-8', 'strict')
+        self.socket.send(INIT_MESSAGE)
+
+        data = self.socket.recv(self.BUFFER_SIZE)
+        data = data.decode('utf-8', 'strict')
+        self.conn_num = int(data)
+
+        print('connection:',self.conn_num,'initialized...')
+
     def handleRequests(self):
         while True:
-            MESSAGE = input("tcpClientA: Enter message to continue/ Enter exit:")
+            MESSAGE = input('Enter message to continue/ Enter exit:')
             BYTE_MESSAGE = MESSAGE.encode('utf-8', 'strict')
             self.socket.send(BYTE_MESSAGE)
 
@@ -25,7 +33,8 @@ class Connection:
                 break
 
             data = self.socket.recv(self.BUFFER_SIZE)
-            print (" Client2 received data:", data.decode('utf-8', 'strict'))
+            print (" Client:",self.conn_num," received data:", data.decode('utf-8', 'strict'))
+            sleep(1)
 
     def send(self, message):
         byte_message = message.encode('utf-8', 'strict')
@@ -36,8 +45,10 @@ class Connection:
 
     def start(self):
         self.connect()
+        self.initConnection()
         self.handleRequests()
         self.close()
 
-connection = Connection('localhost', 4000)
-connection.start()
+if(__name__ == '__main__'):
+    connection = Connection('localhost', 4000)
+    connection.start()

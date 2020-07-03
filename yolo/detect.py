@@ -1,8 +1,8 @@
 import argparse
 
-from models import *  # set ONNX_EXPORT in models.py
-from utils.datasets import *
-from utils.utils import *
+from yolo.models import *  # set ONNX_EXPORT in models.py
+from yolo.utils.datasets import *
+from yolo.utils.utils import *
 
 from time import sleep
 

@@ -11,20 +11,21 @@ class ClientThread(Thread):
         self.conn = conn
 
     def run(self):
-
         while True:
             byte_data = self.conn.recv(2048)
             string_data = byte_data.decode('utf-8')
 
-            print("Server received data:", string_data)
+            #print("Server received data:", string_data)
             
             if(string_data == 'EXIT'):
                 break
-
+            elif(string_data == 'init'):
+                print('initializing connection: ',self.client_num)
+                byte_data = str(self.client_num).encode('utf-8', 'strict')
             self.conn.send(byte_data)
         print('Client: ', self.client_num, ' closed connection...')
 
-class MasterServer:
+class Server:
     clients = []
     connected_clients = 0
     socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -50,5 +51,6 @@ class MasterServer:
 
             self.clients.append(client)
 
-server = MasterServer('0.0.0.0', 4000)
-server.start()
+if(__name__ == '__main__'):
+    server = Server('0.0.0.0', 4000)
+    server.start()
