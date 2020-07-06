@@ -47,8 +47,8 @@ rune_modell.load(rune_modell.opt)
 
 #Screenshot into im0,img, need path and 
 screenshot = pyautogui.screenshot()
-#screenshot.save('screenshot.png')
 
+#screenshot.save('screenshot.png')
 img0 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
 # Padded resize

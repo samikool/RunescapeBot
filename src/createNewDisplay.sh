@@ -17,7 +17,7 @@ sleep $time
 echo creating displays
 for ((i=1; i<=$numBots; i++))
 do
-    Xvfb :$i -screen 0 1920x1080x24+32 -fbdir /var/tmp/$i &
+    Xvfb :$i -screen 0 1280x720x24+32 -fbdir /var/tmp/$i &
 done
 
 sleep $time

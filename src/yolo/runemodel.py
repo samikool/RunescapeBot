@@ -50,6 +50,8 @@ class rune_model:
 
         self.opt = opt
 
+        self.imageCount = 0
+
     def load(self, opt, save_img=False):
         imgsz = opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
         out, source, weights, half, view_img, save_txt = opt.output, opt.source, opt.weights, opt.half, opt.view_img, opt.save_txt
@@ -82,7 +84,7 @@ class rune_model:
 
         self.stuff = {'imgsz':imgsz, 'names':names, 'colors':colors, 'device':device, 'model':model, 'opt':opt, 'dataset':dataset, 'out':out, 'save_txt':save_txt, 'save_img':save_img, 'view_img':view_img}
 
-    def detect(self, imgg, im0s, count):
+    def detect(self, imgg, im0s):
         #Run inference
         t0 = time.time()
 
@@ -102,7 +104,7 @@ class rune_model:
         # Apply NMS
         pred = non_max_suppression(pred, self.opt.conf_thres, self.opt.iou_thres,
                                 multi_label=False, classes=self.opt.classes, agnostic=self.opt.agnostic_nms)
-                                
+        objects={}             
         # Process detections
         for i, det in enumerate(pred):  # detections for image i
             s, im0 = '', im0s
@@ -118,7 +120,7 @@ class rune_model:
                 #     n = (det[:, -1] == c).sum()  # detections per class
                 #     s += '%g %ss, ' % (n, self.stuff['names'][int(c)])  # add to string
 
-                objects={}
+                
                 j=0
                 # Write results 
                 for *xyxy, conf, cls in det:
@@ -134,13 +136,15 @@ class rune_model:
                         label = '%s %.2f' % (self.stuff['names'][int(cls)], conf)
                         plot_one_box(xyxy, im0, label=label, color=self.stuff['colors'][int(cls)])
                 
-                print(objects)
+                #print(objects)
                 
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Save results (image with detections)
-            cv2.imwrite('output/screenshot'+str(count)+'.png', im0)
+            cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0)
 
         print('Done. (%.3fs)' % (time.time() - t0))
+        self.imageCount += 1
+        return objects

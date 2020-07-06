@@ -6,3 +6,4 @@ raw_videos/
 !*/raw_videos/convertToImages.py
 *.zip
 weights/
+output/
