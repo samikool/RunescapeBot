@@ -2,17 +2,59 @@ import pyautogui
 import cv2
 import numpy as np
 import imutils
+import random
+
+from math import sqrt
+from yolo.runemodel import Rune_model
 
 #class will handle all interaction with the GUI
 class Controller:
+    model = Rune_model()
+    #pixel is roughly center of screen
+    centerx=1280//2
+    centery=720//2
+    
     def __init__(self):
+        self.model.load(self.model.opt)
         pass
     
-    def getScreencap(self):
-        screenshot = pyautogui.screenshot()
-        return self.convertScreenshot(screenshot)
+    def clickBox(self,top,left,bottom,right):
+        clickx = random.randint(left, right)
+        clicky = random.randint(top, bottom)
+        duration = random.uniform(.25, 1)
+        pyautogui.moveTo(clickx, clicky, duration)
+        pyautogui.click()
 
-    def convertScreenshot(self, screenshot):
+    ##object is string name of object to click on
+    ##objects is map of objects returned from detect
+    ##Function will parse objects and click closest one
+    def clickObject(self, object, objects):
+
+        clickableObjects = []
+        
+        for obj in objects:
+            if(objects[obj]['class'] == object):
+                clickableObjects.append(objects[obj])
+
+        #find object that is minimum distance
+        minObj = clickableObjects[0]
+        minDis = self.dis(clickableObjects[0]['centerx'], clickableObjects[0]['centery'], self.centerx, self.centery)
+
+        for i in range(1,len(clickableObjects)):
+            objDis = self.dis(clickableObjects[i]['centerx'], clickableObjects[i]['centery'], self.centerx, self.centery)
+            if(objDis < minDis):
+                minDis = objDis
+                minObj = clickableObjects[i]
+
+        self.clickBox(minObj['top'], minObj['left'], minObj['bottom'], minObj['right'])
+
+
+    def dis(self, x1, y1, x2, y2):
+        return sqrt((x2-x1)**2 + (y2-y1)**2)
+    
+    def getObjects(self):
+        screenshot = pyautogui.screenshot()
+
         #screenshot.save('screenshot.png')
         img0 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
@@ -22,7 +64,8 @@ class Controller:
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
         img = np.ascontiguousarray(img)
-        return img, img0
+
+        return self.model.detect(img, img0)
 
     #Function does something to format screenshot I have no idea what
     def letterbox(self, img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):

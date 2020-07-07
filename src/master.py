@@ -1,22 +1,21 @@
 import argparse
 import threading
 import botutils 
+import queue
 
 from botclient import BotClient
 from time import sleep
-from yolo.runemodel import rune_model
 
 
 class Master:
     def __init__(self, numbots=None):
-
         if(numbots == None):
             raise ValueError('numbots must have a value >= 1')
         
         self.numbots = numbots
         self.bots = []
-        self.model = rune_model()
-        self.model.load(self.model.opt)
+        self.messageQ = queue.Queue()
+
         sleep(5)
         
     def detect(self, img, img0):

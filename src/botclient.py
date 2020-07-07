@@ -14,6 +14,9 @@ class BotClient:
         self.master = master
         self.inTask = False
         self.messageQ = queue.Queue()
+        self.objects = {}
+
+
 
     def watchQ(self):
         while True:
@@ -30,9 +33,10 @@ class BotClient:
         self.inTask = True
         self.taskLoop()
 
-    def taskLoop(self, task):
+    def taskLoop(self):
         while self.inTask:
-            pass
+            for action in self.task['loop']:
+                self.executeAction(action)
 
     def stopTask(self):
         self.inTask = False
@@ -40,7 +44,9 @@ class BotClient:
     def parseTask(self, task_name):
         with open('tasks.cfg', 'r') as file:
             lines = file.readlines()
+            print(lines)
             for i in range(len(lines)):
+                print(lines[i])
                 if(lines[i].startswith('[')):
                     task = {}
                     while(True):
@@ -54,7 +60,32 @@ class BotClient:
                         task[key] = value
                     
                     if(task['name'] == task_name):
+                        task['loop'] = task['loop'].split(',')
                         return task
+    #will call appropiate functions in controller/python libs to execute action
+    def executeAction(self, action):
+        actionList = action.split(' ')
+
+        action = actionList[0]
+        param = actionList[1:] if len(actionList) > 1 else None
+        
+        print(action)
+        print(param)
+
+        if action == 'see':
+            self.objects = self.controller.getObjects()
+            pass
+        
+        elif action == 'wait':
+            #[0] = time
+            sleep(int(param[0]))
+            pass
+
+        elif action == 'click':
+            #[0] = object to click
+            self.controller.clickObject(param[0],self.objects)
+            pass
+
 
     def start(self):
         pass
@@ -65,4 +96,8 @@ class BotClient:
 
 if __name__ == '__main__':
     client = BotClient(None, 1)
-    print(client.giveTask('farm_trees'))
+    client1 = BotClient(None, 1)
+    client2 = BotClient(None, 1)
+
+    print(client.giveTask('farm_common_trees'))
+    client.startTask()

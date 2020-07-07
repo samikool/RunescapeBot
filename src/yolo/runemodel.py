@@ -6,7 +6,7 @@ from yolo.utils.utils import *
 
 from time import sleep
 
-class rune_model:
+class Rune_model:
     opt = {}
     stuff = {}
     def __init__(self, 
@@ -125,10 +125,12 @@ class rune_model:
                 # Write results 
                 for *xyxy, conf, cls in det:
                     objects[j] = {}
-                    objects[j]['top'] = xyxy[0].item()
-                    objects[j]['left'] = xyxy[1].item()
-                    objects[j]['bottom'] = xyxy[2].item()
-                    objects[j]['right'] = xyxy[3].item()
+                    objects[j]['left'] = xyxy[0].item()
+                    objects[j]['top'] = xyxy[1].item()
+                    objects[j]['right'] = xyxy[2].item()
+                    objects[j]['bottom'] = xyxy[3].item()
+                    objects[j]['centerx'] = (objects[j]['right'] + objects[j]['left']) / 2
+                    objects[j]['centery'] = (objects[j]['bottom'] + objects[j]['top']) / 2
                     objects[j]['class'] = self.stuff['names'][int(cls)]
                     j+=1
 
@@ -137,13 +139,13 @@ class rune_model:
                         plot_one_box(xyxy, im0, label=label, color=self.stuff['colors'][int(cls)])
                 
                 #print(objects)
-                
+                cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0)
 
             # Print time (inference + NMS)
             print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Save results (image with detections)
-            cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0)
+            
 
         print('Done. (%.3fs)' % (time.time() - t0))
         self.imageCount += 1
