@@ -18,18 +18,26 @@ class Controller:
         self.model.load(self.model.opt)
         pass
     
+    #clicks in random location in box and returns values of where mouse clicked
     def clickBox(self,top,left,bottom,right):
-        clickx = random.randint(left, right)
-        clicky = random.randint(top, bottom)
+        #padding is applied to every side of box to ensure we click the object
+        padding = 20
+
+        clickx = random.randint(left+20, right-20)
+        clicky = random.randint(top+20, bottom-20)
+
         duration = random.uniform(.25, 1)
+        
         pyautogui.moveTo(clickx, clicky, duration)
         pyautogui.click()
+        
+        return clickx, clicky
 
     ##object is string name of object to click on
     ##objects is map of objects returned from detect
     ##Function will parse objects and click closest one
+    ##Return x and y location of where pointer clicked
     def clickObject(self, object, objects):
-
         clickableObjects = []
         
         for obj in objects:
@@ -46,8 +54,35 @@ class Controller:
                 minDis = objDis
                 minObj = clickableObjects[i]
 
-        self.clickBox(minObj['top'], minObj['left'], minObj['bottom'], minObj['right'])
+        clickx,clicky = self.clickBox(minObj['top'], minObj['left'], minObj['bottom'], minObj['right'])
+        return clickx,clicky
 
+    def objectIsAtCoord(self, x, y, objectName, objects):
+        # print(objects)
+        for obj in objects:
+            object = objects[obj]
+            left  = objects[obj]['left']
+            right  = objects[obj]['right']
+            
+            top = objects[obj]['top']
+            bottom = objects[obj]['bottom']
+
+            # print(left)
+            # print(x)
+            # print(right)
+
+            # print(top)
+            # print(y)
+            # print(bottom)
+
+            # input()
+
+            if(left < x and x < right and top < y and y < bottom):
+                print('object still there...', '\r')
+                return True
+
+        print('object gone...')
+        return False
 
     def dis(self, x1, y1, x2, y2):
         return sqrt((x2-x1)**2 + (y2-y1)**2)

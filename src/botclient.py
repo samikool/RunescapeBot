@@ -27,7 +27,6 @@ class BotClient:
 
     def giveTask(self, task_name):
         self.task = self.parseTask(task_name)
-        print(self.task)
 
     def startTask(self):
         self.inTask = True
@@ -44,9 +43,7 @@ class BotClient:
     def parseTask(self, task_name):
         with open('tasks.cfg', 'r') as file:
             lines = file.readlines()
-            print(lines)
             for i in range(len(lines)):
-                print(lines[i])
                 if(lines[i].startswith('[')):
                     task = {}
                     while(True):
@@ -69,8 +66,7 @@ class BotClient:
         action = actionList[0]
         param = actionList[1:] if len(actionList) > 1 else None
         
-        print(action)
-        print(param)
+        print('Action:', action,'Params:',param)
 
         if action == 'see':
             self.objects = self.controller.getObjects()
@@ -81,10 +77,20 @@ class BotClient:
             sleep(int(param[0]))
             pass
 
+        elif action == 'farm':
+            #[0] = object to farm
+            #Save last click location
+            self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
+            while(self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
+                sleep(5)
+                self.executeAction('see')
+                
+
         elif action == 'click':
             #[0] = object to click
-            self.controller.clickObject(param[0],self.objects)
-            pass
+            #Save last click location
+            self.lastClickX, self.lastClickY = self.controller.clickObject(param[0],self.objects)
+
 
 
     def start(self):
