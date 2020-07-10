@@ -1,42 +1,90 @@
-import pyautogui
+import importlib
+import os
+import random
+
+import copy
 import cv2
 import numpy as np
 import imutils
-import random
+import pyautogui
 
+from time import sleep
 from math import sqrt
 from yolo.runemodel import Rune_model
 
+
 #class will handle all interaction with the GUI
 class Controller:
-    model = Rune_model()
+    # model = Rune_model()
     #pixel is roughly center of screen
-    centerx=1280//2
+    centerx=(1280-36)//2
     centery=720//2
+    modelLoaded = False
     
-    def __init__(self):
-        self.model.load(self.model.opt)
-        pass
+    def __init__(self, display, model):
+        Controller.model = model
+        self.display=display
+
+    def mouseLoop(self, num):
+        while(True):
+            print(str(num)+': '+str(pyautogui.position()))
+            sleep(2)
     
+
+    def screenshot(self, name='image.png'):
+        pyautogui.screenshot(name)
+
+    ### TODO: MOVE UTIL FUNCTION
+    def mse(self, imageA, imageB):
+        # the 'Mean Squared Error' between the two images is the
+        # sum of the squared difference between the two images;
+        # NOTE: the two images must have the same dimension
+        err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+        err /= float(imageA.shape[0] * imageA.shape[1])
+        
+        # return the MSE, the lower the error, the more "similar"
+        # the two images are
+        return err
+
+    def moving(self,thresh=100,print=False):
+        #screenshot funcion takes ~100ms
+        im_one = np.array(pyautogui.screenshot())
+        im_two = np.array(pyautogui.screenshot())
+        
+        error = self.mse(im_one, im_two)
+        moving = True if error > thresh else False
+
+        if(print):
+            print('error:',error)
+            print('moving:',moving)
+        return moving
+
+        #code for printing error
+        # error = self.mse(im_one, im_two)
+        # s = 'error:'+str(error)+' '
+        # s += 'moving:'+str(True if error > 100 else False)
+        # print(s,end='\r')
+
     #clicks in random location in box and returns values of where mouse clicked
     def clickBox(self,top,left,bottom,right):
         #padding is applied to every side of box to ensure we click the object
-        padding = 20
+        padding = 10
 
-        clickx = random.randint(left+20, right-20)
-        clicky = random.randint(top+20, bottom-20)
+        clickx = random.randint(left+padding, right-padding)
+        clicky = random.randint(top+padding, bottom-padding)
 
-        duration = random.uniform(.25, 1)
+        duration = random.uniform(.1, .5)
         
         pyautogui.moveTo(clickx, clicky, duration)
         pyautogui.click()
         
         return clickx, clicky
 
-    ##object is string name of object to click on
-    ##objects is map of objects returned from detect
+
     ##Function will parse objects and click closest one
-    ##Return x and y location of where pointer clicked
+    #object is string name of object to click on
+    #objects is map of objects returned from detect
+    #Returns x and y location of where pointer clicked
     def clickObject(self, object, objects):
         clickableObjects = []
         
@@ -55,7 +103,25 @@ class Controller:
                 minObj = clickableObjects[i]
 
         clickx,clicky = self.clickBox(minObj['top'], minObj['left'], minObj['bottom'], minObj['right'])
-        return clickx,clicky
+        minObj['angle'] = self.calcObjAngle(minObj)
+        return clickx,clicky,minObj
+
+    ##Function calulates angle between player and object
+    def calcObjAngle(self, obj):
+        #calc angle 
+        vec1 = [1,0]
+        vec2 = [obj['centerx'] - (1280-36)//2, obj['centery'] - 720//2]
+
+        vec1 = vec1 / np.linalg.norm(vec1)
+        vec2 = vec2 / np.linalg.norm(vec2)
+        angle = np.arccos(np.clip(np.dot(vec1,vec2),-1.0, 1.0))
+
+        if(vec2[1] > 0):
+            angle = 360-angle*180/3.14159265359
+        else:
+            angle = angle*180/3.14159265359
+
+        return angle
 
     def objectIsAtCoord(self, x, y, objectName, objects):
         # print(objects)
@@ -101,7 +167,10 @@ class Controller:
         img = np.ascontiguousarray(img)
 
         return self.model.detect(img, img0)
+        # return self.model._callmethod('detect', [img, img0])
 
+
+    ### TODO: MOVE UTIL FUNCTION
     #Function does something to format screenshot I have no idea what
     def letterbox(self, img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
         # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232

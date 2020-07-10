@@ -7,4 +7,4 @@ display=$1
 #-once -- only allow one connection opposite of -forever
 
 
-exec x11vnc -display :$display -N -noipv6 -shared -nopw &
+exec x11vnc -display $display -N -noipv6 -shared -nopw -quiet &

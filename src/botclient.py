@@ -1,22 +1,25 @@
 import threading
 import random
 import queue
+import subprocess
+import os
+import numpy as np
 
+from importlib import reload
+import importlib
 from controller import Controller
 from time import sleep
 
 #Will handle all the task logic
 class BotClient:
-    controller = Controller()
-
-    def __init__(self, master, client_num):
+    def __init__(self, master, client_num, model):
         self.client_num = client_num
         self.master = master
         self.inTask = False
         self.messageQ = queue.Queue()
         self.objects = {}
-
-
+        self.task={}
+        self.controller = Controller(client_num, model)
 
     def watchQ(self):
         while True:
@@ -27,6 +30,7 @@ class BotClient:
 
     def giveTask(self, task_name):
         self.task = self.parseTask(task_name)
+        return self.task
 
     def startTask(self):
         self.inTask = True
@@ -58,7 +62,9 @@ class BotClient:
                     
                     if(task['name'] == task_name):
                         task['loop'] = task['loop'].split(',')
+                        print(task)
                         return task
+
     #will call appropiate functions in controller/python libs to execute action
     def executeAction(self, action):
         actionList = action.split(' ')
@@ -70,40 +76,100 @@ class BotClient:
 
         if action == 'see':
             self.objects = self.controller.getObjects()
-            pass
         
         elif action == 'wait':
             #[0] = time
-            sleep(int(param[0]))
-            pass
+            sleep(int(param[0]))    
 
         elif action == 'farm':
             #[0] = object to farm
-            #Save last click location
-            self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
-            while(self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
-                sleep(5)
+
+            #click on object to move there
+            self.lastClickX, self.lastClickY, obj = self.controller.clickObject(param[0], self.objects)
+
+            # #this sleep is to account for ping TODO: find a more consistant way to account for ping
+            sleep(0.75)
+            
+            #lock bot until it stops moving
+            self.executeAction('move')
+
+            ##############
+            #first attempt # not deleting yet incase second attempt doesn't work
+            ##############
+            #after moving look again and refind object
+            #click object again resetting its coordinates before the farm loop starts
+            #problem: sometimes it disappears since looking again takes a lot of time and it has already been farmed
+            #this leads the bot to clicking again when it shouldn't wasting some time
+            #results are good though, as the bot doesn't get 'locked up' since the second click just moves the bot 
+            #then the loop continues and it finds another tree
+
+            # #look again to reset coordinates of object
+            # self.executeAction('see')
+
+            #reclick object 
+            # self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
+
+            ################
+            ##second attempt
+            ################
+            # assume we will walk up next to object so check for it based on the players location
+            # try to predict the coordinates of where the object will be after bot walks to it
+            # resolves problem of first attempt by not requiring another click or another 'look'
+
+            xoffset = 0
+            yoffset = 0
+
+            fac=.8
+
+            #based on angle to object adjust offset on where to find object 
+            if 315 < obj['angle'] and obj['angle'] < 45:
+                #going to approach object from left
+                xoffset = obj['width']*fac
+
+            elif 45 < obj['angle'] and obj['angle'] < 135:
+                #going to approach object from bottom
+                yoffset = -obj['height']*fac
+
+            elif 135 < obj['angle'] and obj['angle'] < 225:
+                #going to approach object from right
+                xoffset = -obj['width']*fac
+
+            elif 225 < obj['angle'] and obj['angle'] < 315:
+                #going to approach object from top
+                yoffset = obj['height']*fac
+
+            ######################
+            ## Debugging prints ##
+            ######################
+            # print(obj)
+            # print('Angle:', obj['angle'])
+            # print('xOffset:',xoffset,'yOffset:',yoffset)
+            # print('NewX:',(1280-36)//2 + xoffset,'NewY:',720//2 + yoffset)
+
+            #while object is there chill until it's farmed then look again and repeat
+            while True:
                 self.executeAction('see')
-                
+                #Use with attempt 1
+                # if(not self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
+                #     break
+
+                #Use with attempt2
+                if(not self.controller.objectIsAtCoord((1280-36)//2 + xoffset, 720//2 + yoffset, param[0], self.objects)):
+                    break
+                sleep(3)
 
         elif action == 'click':
-            #[0] = object to click
+            #[0] = object to click 
             #Save last click location
             self.lastClickX, self.lastClickY = self.controller.clickObject(param[0],self.objects)
+        
+        elif action == 'move':
+            #will lock bot until it stops moving
+            while(self.controller.moving()):
+                sleep(0.1)
 
-
-
-    def start(self):
-        pass
-        # self.initialize()
-        # while True:
-        #     img, img0 = self.controller.getScreencap()
-        #     objects = self.master.detect(img, img0)
-
-if __name__ == '__main__':
-    client = BotClient(None, 1)
-    client1 = BotClient(None, 1)
-    client2 = BotClient(None, 1)
-
-    print(client.giveTask('farm_common_trees'))
+#for now put any logic you want to use to control bots here
+def main(num,model):
+    client = BotClient(None, num, model)
+    client.giveTask('farm_common_trees')
     client.startTask()

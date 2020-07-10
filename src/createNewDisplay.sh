@@ -1,40 +1,23 @@
 #!/bin/bash
-numBots=$1
-time=5
+displayNum=$1
+time=2
 
-killall -s 15 Xvfb
 killall -s 15 java
 
 echo initializing directories
-for ((i=1; i<=$numBots; i++))
-do
-    rm -rf /var/tmp/$i
-    mkdir /var/tmp/$i
-done
+
+rm -rf /var/tmp/$displayNum
+mkdir /var/tmp/$displayNum
 
 sleep $time
 
-echo creating displays
-for ((i=1; i<=$numBots; i++))
-do
-    Xvfb :$i -screen 0 1280x720x24+32 -fbdir /var/tmp/$i &
-done
+echo creating display
+Xvfb $displayNum -screen 0 1280x720x24+32 -fbdir /var/tmp/$displayNum &
+
 
 sleep $time
 
-echo starting desktops
-for ((i=1; i<=$numBots; i++))
-do
-    export DISPLAY=:$i
-    exec startlxde &
-done
+echo starting desktop
 
-#sleep $time    
-
-# echo starting VNC servers
-# for ((i=1; i<=$numBots; i++))
-# do
-#     #Start VNC Server
-#     
-# done
-
+export DISPLAY=$displayNum
+exec startlxde &

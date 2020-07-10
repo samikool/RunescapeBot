@@ -6,9 +6,7 @@ from yolo.utils.utils import *
 
 from time import sleep
 
-class Rune_model:
-    opt = {}
-    stuff = {}
+class Rune_model(object):
     def __init__(self, 
                 cfg='yolo/cfg/yolov3-spp.cfg', 
                 names='yolo/data/custom/custom.names', 
@@ -45,26 +43,28 @@ class Rune_model:
         opt.agnostic_nms = agnostic_nms
         opt.augment = augment
 
-        opt.cfg = list(glob.iglob('./**/' + opt.cfg, recursive=True))[0]  # find file
-        opt.names = list(glob.iglob('./**/' + opt.names, recursive=True))[0]  # find file
+        # opt.cfg = list(glob.iglob('./**/' + opt.cfg, recursive=True))[0]  # find file
+        # opt.names = list(glob.iglob('./**/' + opt.names, recursive=True))[0]  # find file
 
         self.opt = opt
-
         self.imageCount = 0
 
-    def load(self, opt, save_img=False):
-        imgsz = opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
-        out, source, weights, half, view_img, save_txt = opt.output, opt.source, opt.weights, opt.half, opt.view_img, opt.save_txt
+    def getOpt(self):
+        return self.opt
+
+    def load(self, save_img=False):
+        imgsz = self.opt.img_size  # (320, 192) or (416, 256) or (608, 352) for (height, width)
+        out, source, weights, half, view_img, save_txt = self.opt.output, self.opt.source, self.opt.weights, self.opt.half, self.opt.view_img, self.opt.save_txt
         source == '0' or source.startswith('rtsp') or source.startswith('http') or source.endswith('.txt')
 
         # Initialize
-        device = torch_utils.select_device(opt.device)
+        device = torch_utils.select_device(self.opt.device)
         if os.path.exists(out):
             shutil.rmtree(out)  # delete output folder
         os.makedirs(out)  # make new output folder
 
         # Initialize model
-        model = Darknet(opt.cfg, imgsz)
+        model = Darknet(self.opt.cfg, imgsz)
 
         # Load weights
         if weights.endswith('.pt'):  # pytorch format
@@ -79,10 +79,10 @@ class Rune_model:
         dataset = LoadImages(source, img_size=imgsz)
 
         # Get names and colors
-        names = load_classes(opt.names)
+        names = load_classes(self.opt.names)
         colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(len(names))]
 
-        self.stuff = {'imgsz':imgsz, 'names':names, 'colors':colors, 'device':device, 'model':model, 'opt':opt, 'dataset':dataset, 'out':out, 'save_txt':save_txt, 'save_img':save_img, 'view_img':view_img}
+        self.stuff = {'imgsz':imgsz, 'names':names, 'colors':colors, 'device':device, 'model':model, 'opt':self.opt, 'dataset':dataset, 'out':out, 'save_txt':save_txt, 'save_img':save_img, 'view_img':view_img}
 
     def detect(self, imgg, im0s):
         #Run inference
@@ -104,7 +104,8 @@ class Rune_model:
         # Apply NMS
         pred = non_max_suppression(pred, self.opt.conf_thres, self.opt.iou_thres,
                                 multi_label=False, classes=self.opt.classes, agnostic=self.opt.agnostic_nms)
-        objects={}             
+        objects={}  
+      
         # Process detections
         for i, det in enumerate(pred):  # detections for image i
             s, im0 = '', im0s
@@ -131,6 +132,8 @@ class Rune_model:
                     objects[j]['bottom'] = xyxy[3].item()
                     objects[j]['centerx'] = (objects[j]['right'] + objects[j]['left']) / 2
                     objects[j]['centery'] = (objects[j]['bottom'] + objects[j]['top']) / 2
+                    objects[j]['width'] = abs(objects[j]['left'] - objects[j]['right'])
+                    objects[j]['height'] = abs(objects[j]['top'] - objects[j]['bottom'])
                     objects[j]['class'] = self.stuff['names'][int(cls)]
                     j+=1
 
@@ -142,11 +145,12 @@ class Rune_model:
                 cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0)
 
             # Print time (inference + NMS)
-            print('%sDone. (%.3fs)' % (s, t2 - t1))
+            #print('%sDone. (%.3fs)' % (s, t2 - t1))
 
             # Save results (image with detections)
             
 
-        print('Done. (%.3fs)' % (time.time() - t0))
+        #print('Done. (%.3fs)' % (time.time() - t0))
         self.imageCount += 1
+        #print(len(objects),'objects detected')
         return objects
