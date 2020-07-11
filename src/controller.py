@@ -31,21 +31,21 @@ class Controller:
             sleep(2)
     
 
-    def screenshot(self, im_name='image.png'):
+    def screenshot(self, im_name='image.png', ):
         pyautogui.screenshot(im_name)
 
-    def findIcon(self, im_name=None):
+    def findIcon(self, im_name=None, confidence=.80):
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
         
-        icon = pyautogui.locateOnScreen(path,confidence=.80)
+        icon = pyautogui.locateOnScreen(path,confidence)
         box = self.convertIconToBox(icon)
 
         return box
         
-    def findAllIcons(self, im_name=None):
+    def findAllIcons(self, im_name=None, confidence=.80):
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
 
-        iconList = list(pyautogui.locateAllOnScreen(path, confidence=.80))
+        iconList = list(pyautogui.locateAllOnScreen(path,confidence))
 
         boxList = []
         for icon in iconList:
