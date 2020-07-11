@@ -43,28 +43,32 @@ rune_modell = rune_model(cfg='yolo/cfg/yolov3-spp.cfg',
                         weights='yolo/weights/best.pt', 
                         source='yolo/data/custom/test_images')
 
-rune_modell.load(rune_modell.opt)
+################
+#Testing model #
+################
+# rune_modell.load(rune_modell.opt)
 
-#Screenshot into im0,img, need path and 
-screenshot = pyautogui.screenshot()
+# #Screenshot into im0,img, need path and 
+# screenshot = pyautogui.screenshot()
 
-#screenshot.save('screenshot.png')
-img0 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
+# #screenshot.save('screenshot.png')
+# img0 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
-# Padded resize
-img = letterbox(img0, new_shape=416)[0]
+# # Padded resize
+# img = letterbox(img0, new_shape=416)[0]
 
-# Convert
-img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-img = np.ascontiguousarray(img)
+# # Convert
+# img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+# img = np.ascontiguousarray(img)
 
-rune_modell.detect(img, img0, 0)
+# rune_modell.detect(img, img0, 0)
 
-# cv2.imshow("Screenshot", imutils.resize(screenshot, width=416))
-# cv2.waitKey(0)
+# # cv2.imshow("Screenshot", imutils.resize(screenshot, width=416))
+# # cv2.waitKey(0)
 
-
-
-
+######################
+# Testing navigation #
+######################
+pyautogui.screenshot('map.png')
 
 

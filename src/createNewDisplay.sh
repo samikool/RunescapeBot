@@ -2,6 +2,11 @@
 displayNum=$1
 time=2
 
+#this command should be able to detect if a display exists or not
+## xdpyinfo -display :1 | grep unable 
+
+
+
 killall -s 15 java
 
 echo initializing directories

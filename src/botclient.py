@@ -94,20 +94,25 @@ class BotClient:
             self.executeAction('move')
 
             ##############
-            #first attempt # not deleting yet incase second attempt doesn't work
+            #first attempt # not deleting yet incase second attempt doesn't work with other objects
             ##############
-            #after moving look again and refind object
+            #after moving to object from first click look again and refind object
             #click object again resetting its coordinates before the farm loop starts
             #problem: sometimes it disappears since looking again takes a lot of time and it has already been farmed
             #this leads the bot to clicking again when it shouldn't wasting some time
             #results are good though, as the bot doesn't get 'locked up' since the second click just moves the bot 
             #then the loop continues and it finds another tree
 
-            # #look again to reset coordinates of object
+            #look again to reset coordinates of object
             # self.executeAction('see')
 
             #reclick object 
             # self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
+
+            # while True:
+            #     self.executeAction('see')
+            #     if(not self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
+            #         break
 
             ################
             ##second attempt
@@ -119,24 +124,24 @@ class BotClient:
             xoffset = 0
             yoffset = 0
 
-            fac=.8
+            offesetFac=.8
 
             #based on angle to object adjust offset on where to find object 
             if 315 < obj['angle'] and obj['angle'] < 45:
                 #going to approach object from left
-                xoffset = obj['width']*fac
+                xoffset = obj['width']*offesetFac
 
             elif 45 < obj['angle'] and obj['angle'] < 135:
                 #going to approach object from bottom
-                yoffset = -obj['height']*fac
+                yoffset = -obj['height']*offesetFac
 
             elif 135 < obj['angle'] and obj['angle'] < 225:
                 #going to approach object from right
-                xoffset = -obj['width']*fac
+                xoffset = -obj['width']*offesetFac
 
             elif 225 < obj['angle'] and obj['angle'] < 315:
                 #going to approach object from top
-                yoffset = obj['height']*fac
+                yoffset = obj['height']*offesetFac
 
             ######################
             ## Debugging prints ##
@@ -149,14 +154,38 @@ class BotClient:
             #while object is there chill until it's farmed then look again and repeat
             while True:
                 self.executeAction('see')
-                #Use with attempt 1
-                # if(not self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
-                #     break
-
-                #Use with attempt2
+                
                 if(not self.controller.objectIsAtCoord((1280-36)//2 + xoffset, 720//2 + yoffset, param[0], self.objects)):
                     break
                 sleep(3)
+
+            #################
+            # Third attempt #
+            #################
+            # use pyauto.screenshot difference and check difference after a tree is cut 
+            # only screenshot around character and object and when it breaks threshhold object must be gone
+            # problem: could be thrown off by other players or farmers
+            # problem: might be hard to figure out exactly what area to screenshot - but could use angle then height and width to roughly encapsolate it 
+            # if it took up a fairly constant % of the screen the results would be good
+            
+            #steps - figureout how to calculate screenshot height and width and 'offset' depending on angle im approaching it from 
+            # maybe just have a big box around me in every direction, that is sort of based on object height-width? 
+
+            # test with two accounts figure out threshold for player walking in 'my box' vs tree vs player farming another tree nearby
+
+            # if it looks like theres a pretty consistant threshold make endless while in controller that given an obj will only break when the object disappears
+            
+            #boom - fastest and possible even more accurate than second idea, which still relies on the nueral network to reget objects 
+
+            ##################
+            # Fourth attempt #
+            ##################
+            #use see to only see a certain portion of the screen, once objects returned is 0 we can leave 
+            #problem: could be thrown off in the future if we start detecting players, npcs or other thing,
+            #but then could also check objects detected and see if the object we want is there or not
+
+
+            
 
         elif action == 'click':
             #[0] = object to click 

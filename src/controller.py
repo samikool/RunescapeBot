@@ -31,8 +31,48 @@ class Controller:
             sleep(2)
     
 
-    def screenshot(self, name='image.png'):
-        pyautogui.screenshot(name)
+    def screenshot(self, im_name='image.png'):
+        pyautogui.screenshot(im_name)
+
+    def findIcon(self, im_name=None):
+        path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
+        
+        icon = pyautogui.locateOnScreen(path,confidence=.80)
+        box = self.convertIconToBox(icon)
+
+        return box
+        
+    def findAllIcons(self, im_name=None):
+        path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
+
+        iconList = list(pyautogui.locateAllOnScreen(path, confidence=.80))
+
+        boxList = []
+        for icon in iconList:
+            boxList.append(self.convertIconToBox(icon))
+
+        return boxList
+
+    #this box could be useful for other things too
+    #it represents what an 'object' looks like to our bot without the class name
+    def convertIconToBox(self, icon):
+        box = {
+            'left': icon[0],
+            'top': icon[1],
+            'right': icon[0]+icon[2],
+            'bottom': icon[1]+icon[3],
+            'width': icon[2],
+            'height': icon[3],
+            'centerx': icon[0]+icon[2]/2,
+            'centery': icon[1]+icon[3]/2,
+        }
+        
+        return box
+
+    def clickIcon(self, icon=None):
+        box = self.findIcon(icon)
+        self.clickBox(box)
+        
 
     ### TODO: MOVE UTIL FUNCTION
     def mse(self, imageA, imageB):
@@ -57,16 +97,16 @@ class Controller:
         if(print):
             print('error:',error)
             print('moving:',moving)
+
         return moving
 
-        #code for printing error
-        # error = self.mse(im_one, im_two)
-        # s = 'error:'+str(error)+' '
-        # s += 'moving:'+str(True if error > 100 else False)
-        # print(s,end='\r')
-
     #clicks in random location in box and returns values of where mouse clicked
-    def clickBox(self,top,left,bottom,right):
+    def clickBox(self,box):
+        top = box['top']
+        left = box['left']
+        bottom = box['bottom']
+        right = box['right']
+
         #padding is applied to every side of box to ensure we click the object
         padding = 10
 
@@ -102,7 +142,7 @@ class Controller:
                 minDis = objDis
                 minObj = clickableObjects[i]
 
-        clickx,clicky = self.clickBox(minObj['top'], minObj['left'], minObj['bottom'], minObj['right'])
+        clickx,clicky = self.clickBox(minObj)
         minObj['angle'] = self.calcObjAngle(minObj)
         return clickx,clicky,minObj
 
