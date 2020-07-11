@@ -177,16 +177,6 @@ class BotClient:
             
             #boom - fastest and possible even more accurate than second idea, which still relies on the nueral network to reget objects 
 
-            ##################
-            # Fourth attempt #
-            ##################
-            #use see to only see a certain portion of the screen, once objects returned is 0 we can leave 
-            #problem: could be thrown off in the future if we start detecting players, npcs or other thing,
-            #but then could also check objects detected and see if the object we want is there or not
-
-
-            
-
         elif action == 'click':
             #[0] = object to click 
             #Save last click location
