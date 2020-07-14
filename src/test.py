@@ -1,45 +1,170 @@
-import pyautogui
+#import pyautogui
+import PIL.Image as im
 import os
 import cv2
 import numpy as np
 import imutils
 from yolo.runemodel import Rune_model
 from time import sleep
+import subprocess
 
-######################
-# Testing navigation #
-######################
+from navigator import Navigator
+from controller import Controller
+#########################################
+# This file is for any random test code #
+#########################################
 
-#map always opens in top left of game screen to chat window in height 
-#width constant 10 pixels away from minimap so calculated based on that
+############################
+# Testing Micro Navigation #
+############################
 
-#fullmap sceenshot
-pyautogui.screenshot('map.png')
+subprocess.call(['clear'])
 
-vertRes = 720
-horzRes = 1280
+navi = Navigator(Controller(1,None), 1280, 720)
+
+#navi.printLocation()
+navi.microNavigate(5440, 2147)
 
 
-#bigmap screenshot
-left = 6
-top = 29
-#verticalResolution - chatboxHeight (165) - bottomBorderThickness (45) - taskbarHeight (26) - topWindowHeight (29)
-height = vertRes - 165 - 45 - 26 - 29
-#horizontalResolution - constant (263) pixels of gui stuff
-width = horzRes - 263 
-pyautogui.screenshot('map1.png', region=(left,top,width,height))
 
-#overview screenshot
-#get these numbers by resolution
-overviewWidth = 196
-overviewHeight = 112
-#width of big map + leftBorder (6) + 1 since overview starts one pixel in - overviewWidth (196) - overviewBorder (2) 
-left = width + 6 + 1 - 196 - 2 
-#height of big map - overviewHeight (112) + topWindowHeight(29) - overviewBorder(1)
-top = height - 112 + 29 - 1
+# ###########################
+# # Rough code for location #
+# ###########################
 
-pyautogui.screenshot('map2.png', region=(left, top, overviewWidth, overviewHeight))
+# ############
+# # IMPORTANT: for faster/more updated code look at navigator.py locate function
+# ############
+# #map always opens in top left of game screen to chat window in height 
+# #width constant 10 pixels away from minimap so calculated based on that
 
+# subprocess.call(['rm', 'map.png', 'map1.png', 'map2.png', 'saved.png'])
+
+# #fullmap sceenshot
+# fullScreenShot = pyautogui.screenshot('map.png')
+
+
+# #this could all be initialized on bot startup
+# vertRes = 720
+# horzRes = 1280
+
+# #bigmap screenshot
+# left = 6
+# top = 29
+# #verticalResolution - chatboxHeight (165) - bottomBorderThickness (45) - taskbarHeight (26) - topWindowHeight (29)
+# height = vertRes - 165 - 45 - 26 - 29
+# #horizontalResolution - constant (263) pixels of gui stuff
+# width = horzRes - 263 
+# bigMapShot = pyautogui.screenshot('map1.png', region=(left,top,width,height))
+
+# #overview screenshot
+# #get these numbers by resolution
+# overviewWidth = 196
+# overviewHeight = 112
+# #width of big map + leftBorder (6) + 1 since overview starts one pixel in - overviewWidth (196) - overviewBorder (2) 
+# left = width + 6 + 1 - 196 - 2 
+# #height of big map - overviewHeight (112) + topWindowHeight(29) - overviewBorder(1)
+# top = height - 112 + 29 - 1
+
+# overviewShot = pyautogui.screenshot('map2.png', region=(left,top,overviewWidth,overviewHeight))
+
+# im_width = overviewShot.width
+# im_height = overviewShot.height
+
+# pixelList = []
+# for y in range(im_height):
+#     for x in range(im_width):
+#         # if (y == 48) and (122 < x and x < 148):
+#         #     print(overviewShot.getpixel((x,y)))
+#         pixel = overviewShot.getpixel((x,y))
+        
+#         if(pixel[0]>190 and pixel[1] < 100 and pixel[2] < 100):
+#             pixelList.append((x,y))
+
+# # for pixel in pixelList:
+# #     overviewShot.putpixel(pixel, (0,0,255))
+
+
+# left = pixelList[0][0]
+# top = pixelList[0][1]
+
+# bottom = top + 10-1
+# right = left + 24-1
+
+# overviewShot.putpixel((left,top), (0,0,255))
+# overviewShot.putpixel((right,bottom), (0,0,255))
+
+# #this is the box
+# overviewShot.save('saved.png')
+# print(left,top,' ',right,bottom)
+
+
+
+
+# worldmap = im.open('worldmap.png')
+# bigMapShot = cv2.imread('map1.png')
+# worldmap = cv2.imread('worldmap.png')
+
+# # result = cv2.matchTemplate(worldmap, bigMapShot, cv2.TM_SQDIFF)
+
+# # min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+# # top_left = min_loc
+# # bot_right = (top_left[0] + len(bigMapShot[0]), top_left[1] + len(bigMapShot))
+
+# # print(top_left)
+# # print(bot_right)
+
+# worldmapWidth = len(worldmap[0])
+# worldmapHeight = len(worldmap)
+
+# widthScaler = worldmapWidth / overviewWidth
+# heightScaler = worldmapHeight / overviewHeight
+
+# bigLeftOffset = int(round(left * widthScaler - 2*left,0))
+# bigTopOffset = int(round(top * heightScaler - 2*top,0))
+
+# bigRightOffset  = int(round(right * widthScaler + 2*right,0))
+# bigBottomOffset = int(round(bottom * heightScaler + 4*bottom,0))
+
+# worldmap = worldmap[bigTopOffset:bigBottomOffset, bigLeftOffset:bigRightOffset]
+
+# cv2.imwrite('subworldmap.png',worldmap)
+
+# #print(bigLeftOffset, bigTopOffset, bigRightOffset, bigBottomOffset)
+
+# result = cv2.matchTemplate(worldmap, bigMapShot, cv2.TM_SQDIFF)
+
+# min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+# top_left = min_loc
+# top_left = (top_left[0]+bigLeftOffset, top_left[1]+bigTopOffset)
+# bot_right = (top_left[0] + len(bigMapShot[0]), top_left[1] + len(bigMapShot))
+
+# print('Rough Location:')
+# print(top_left)
+# print(bot_right)
+
+# x = (top_left[0] + bot_right[0]) // 2
+# y = (top_left[1] + bot_right[1]) // 2
+
+# print('Precise Location')
+# print('x:',x,'y:',y)
+
+
+
+
+
+#take pic of bigmap and overview map
+
+#process overview map to find rough location
+
+#search worldmap only at rough location, for where bigmap fits in
+
+#convert the matches coordiantes back into big map coordinates
+
+#find center of that rectangle made my converted coordinates
+
+#that is our raw x,y location
 
 
 # def letterbox(img, new_shape=(416, 416), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
@@ -81,7 +206,7 @@ pyautogui.screenshot('map2.png', region=(left, top, overviewWidth, overviewHeigh
 
 # ###############
 # Testing model #
-# ###############
+
 # rune_modell.load(rune_modell.opt)
 
 # #Screenshot into im0,img, need path and 
@@ -101,7 +226,3 @@ pyautogui.screenshot('map2.png', region=(left, top, overviewWidth, overviewHeigh
 
 # # cv2.imshow("Screenshot", imutils.resize(screenshot, width=416))
 # # cv2.waitKey(0)
-
-
-
-

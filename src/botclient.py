@@ -67,6 +67,8 @@ class BotClient:
 
     #will call appropiate functions in controller/python libs to execute action
     def executeAction(self, action):
+        print(self.controller.findAllIcons('logs'))
+
         actionList = action.split(' ')
 
         action = actionList[0]

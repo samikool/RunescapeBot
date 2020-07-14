@@ -1,7 +1,6 @@
 import importlib
 import os
 import random
-
 import copy
 import cv2
 import numpy as np
@@ -11,7 +10,7 @@ import pyautogui
 from time import sleep
 from math import sqrt
 from yolo.runemodel import Rune_model
-
+from navigator import Navigator
 
 #class will handle all interaction with the GUI
 class Controller:
@@ -19,17 +18,19 @@ class Controller:
     #pixel is roughly center of screen
     centerx=(1280-36)//2
     centery=720//2
+    resH = 720
+    resW = 1280
     modelLoaded = False
     
     def __init__(self, display, model):
         Controller.model = model
         self.display=display
+        self.navigator = Navigator(self, self.resW, self.resH)
 
     def mouseLoop(self, num):
         while(True):
             print(str(num)+': '+str(pyautogui.position()))
             sleep(2)
-    
 
     def screenshot(self, im_name='image.png', ):
         pyautogui.screenshot(im_name)
@@ -37,15 +38,19 @@ class Controller:
     def findIcon(self, im_name=None, confidence=.80):
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
         
-        icon = pyautogui.locateOnScreen(path,confidence)
+        icon = pyautogui.locateOnScreen(path,confidence=confidence)
         box = self.convertIconToBox(icon)
-
         return box
-        
+
+    def clickIcon(self, ic_name):
+        box = findIcon(ic_name)
+        self.clickIconBox(box)
+
+
     def findAllIcons(self, im_name=None, confidence=.80):
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
 
-        iconList = list(pyautogui.locateAllOnScreen(path,confidence))
+        iconList = list(pyautogui.locateAllOnScreen(path,confidence=confidence))
 
         boxList = []
         for icon in iconList:
@@ -68,12 +73,7 @@ class Controller:
         }
         
         return box
-
-    def clickIcon(self, icon=None):
-        box = self.findIcon(icon)
-        self.clickBox(box)
         
-
     ### TODO: MOVE UTIL FUNCTION
     def mse(self, imageA, imageB):
         # the 'Mean Squared Error' between the two images is the
@@ -100,8 +100,16 @@ class Controller:
 
         return moving
 
+    # TODO: implement
+    def clickIconBox(self,box):
+        pass
+
+    def clickPixel(self,x,y):
+        pyautogui.moveTo(x,y)
+        pyautogui.click()
+
     #clicks in random location in box and returns values of where mouse clicked
-    def clickBox(self,box):
+    def clickObjectBox(self,box):
         top = box['top']
         left = box['left']
         bottom = box['bottom']
@@ -142,7 +150,7 @@ class Controller:
                 minDis = objDis
                 minObj = clickableObjects[i]
 
-        clickx,clicky = self.clickBox(minObj)
+        clickx,clicky = self.clickObjectBox(minObj)
         minObj['angle'] = self.calcObjAngle(minObj)
         return clickx,clicky,minObj
 
@@ -151,7 +159,9 @@ class Controller:
         #calc angle 
         vec1 = [1,0]
         vec2 = [obj['centerx'] - (1280-36)//2, obj['centery'] - 720//2]
+        return self.angle(vec1,vec2)
 
+    def angle(self, vec1, vec2):
         vec1 = vec1 / np.linalg.norm(vec1)
         vec2 = vec2 / np.linalg.norm(vec2)
         angle = np.arccos(np.clip(np.dot(vec1,vec2),-1.0, 1.0))
