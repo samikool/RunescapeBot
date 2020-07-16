@@ -18,13 +18,10 @@ class Master:
 
         sleep(5)
         
-    def detect(self, img, img0):
-        return self.model.detect(img, img0)
-        
     def start(self):
         for i in range(self.numbots):
             #botutils.startBots(self.numbots)
-            self.bots.append(BotClient(self, i))
+            self.bots.append(BotClient(self, i, None))
 
         for i in range(self.numbots):
             client_thread = threading.Thread(target=self.bots[i].start)

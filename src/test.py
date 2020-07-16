@@ -6,6 +6,9 @@ import numpy as np
 import imutils
 from yolo.runemodel import Rune_model
 from time import sleep
+from graph import Vertex
+from graph import MapGraph
+
 import subprocess
 
 from navigator import Navigator
@@ -14,18 +17,38 @@ from controller import Controller
 # This file is for any random test code #
 #########################################
 
-############################
-# Testing Micro Navigation #
-############################
+
+#################
+# Testing Graph #
+#################
+
+# g = MapGraph()
+
+# v1 = Vertex('1',(5565,2318))
+# v2 = Vertex('2',(5562,2198))
+# v3 = Vertex('3', (5541,2102))
+
+# g.addVertex(v1)
+# g.addVertex(v2)
+# g.addVertex(v3)
+# g.addEdge(v1,v2)
+# g.addEdge(v2,v3)
+# g.addEdge(v1,v3)
+
+
+
+
+######################
+# Testing Navigation #
+######################
 
 subprocess.call(['clear'])
 
 navi = Navigator(Controller(1,None), 1280, 720)
-
 #navi.printLocation()
-navi.microNavigate(5440, 2147)
+navi.macroNavigate(place='lumbridge_north_farm')
 
-
+#navi.macroNavigate(5846, 2025)
 
 # ###########################
 # # Rough code for location #

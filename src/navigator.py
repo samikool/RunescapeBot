@@ -7,6 +7,10 @@ from time import sleep
 import time
 import mss
 import math
+import random
+
+from graph import MapGraph
+from graph import Vertex
 
 class Navigator:
     def __init__(self, controller, resHorz, resVert):
@@ -15,6 +19,10 @@ class Navigator:
         self.resVert = resVert
         #load worldmap ahead of time
         self.worldmap = cv2.imread('worldmap.png')
+        
+        mapnodes = self.parseMapCfg()
+        self.mapGraph = self.createGraph(mapnodes)
+
         #Region represents the bigMap #top,left,width,height
         self.bigmapRegion = (
             6,
@@ -31,6 +39,55 @@ class Navigator:
             112,    #height
         )
 
+    def createGraph(self, mapnodes):
+        g = MapGraph()
+        verts = {}
+        #create each verticie and add it to graph
+        for node in mapnodes.values():
+            verts[node['name']] = Vertex(node['name'],(int(node['x']),int(node['y'])))
+            g.addVertex(verts[node['name']])
+
+        #connecect verticies based on neighbors list
+        for node in mapnodes.values():
+            neighbors = node['neighbors'].split(',')
+
+            for n in neighbors:
+                g.addEdge(verts[node['name']],verts[n])
+        return g
+
+
+    #parse map cfg and return a graph
+    def parseMapCfg(self):
+        allMapNodes = dict()
+        with open('mapnodes.cfg', 'r') as file:
+            lines = file.readlines()
+            
+            curMapNode = dict()
+            reading = False
+            for line in lines:
+                line = line.strip('\n')
+
+                if line.startswith('#'):
+                    continue
+
+                if line == '':
+                    continue
+
+                if line.startswith('['):
+                    if reading:
+                        allMapNodes[curMapNode['name']] = curMapNode
+                        curMapNode = dict()
+                    reading = not reading
+                    continue
+                
+                if reading:
+                    key = line.split('=')[0]
+                    value = line.split('=')[1]
+                    curMapNode[key]=value
+        return allMapNodes
+
+            
+
 
     def printLocation(self):
         while True:
@@ -42,6 +99,7 @@ class Navigator:
         arrived = False
         print('navigating to x:',destX,':y',destY)
         while not arrived:
+            t0 = time.time()
             curX, curY = self.getLocation()
 
             #find difference vector
@@ -58,9 +116,9 @@ class Navigator:
             #convert angle to radians
 
             #x = clickableCompassRadius * cos(angle)
-            x = 136/2*math.cos(angle)
+            x = 135/2*math.cos(angle)
             #y = clickableCompassRadius * sin(angle) # y needs to be flipped
-            y = -(136/2*math.sin(angle))
+            y = -(135/2*math.sin(angle))
 
             #convert relative xy to global xy
             #compass will always be centered here
@@ -79,17 +137,31 @@ class Navigator:
             arrived = False if distance > 15 else True
 
             #debugging print
-            #print('angle:',angle,'x:',x,'y:',y,'onComp:',compassContains,'dist:',distance,'arrived',arrived,'time:',time.time()-t0,end='\r')
-            sleep(1)
+            #print('angle:',angle,'x:',x,'y:',y,'dist:',distance,'arrived',arrived,'time:',time.time()-t0,end='\r')
+            sleep(random.uniform(.25, 1))
         
         while(self.controller.moving()):
             sleep(1)
         curX,curY = self.getLocation()
         print('Arrived at x:',curX,'y:',curY)
 
-    def macroNavigate(self,destX,destY):
+    def macroNavigate(self,destX=0,destY=0,place=None):
+        if place != None:
+            targetVert = self.mapGraph.getV(place)
+            destX = targetVert.data[0]
+            destY = targetVert.data[1]
+
         #calculate path based on nodes
-        pass
+        curX,curY = self.getLocation()
+        #curX,curY = 5570,2450
+        startV = self.mapGraph.getClosestVertex((curX,curY))
+        endV = self.mapGraph.getClosestVertex((destX, destY))
+
+        path = self.mapGraph.findPath(startV,endV)
+        for v in path:
+            self.microNavigate(v.data[0],v.data[1])
+        self.microNavigate(destX, destY)
+
 
     def compassContainsDest(self,curX,curY,destX,destY):
         minX = curX - 55
@@ -128,8 +200,6 @@ class Navigator:
             self.bigmapRegion[0]+self.bigmapRegion[2],
             self.bigmapRegion[1]+self.bigmapRegion[3]
         ))
-
-
 
         #find rough location based on overview
         pixelList = []

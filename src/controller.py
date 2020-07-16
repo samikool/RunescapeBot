@@ -105,7 +105,7 @@ class Controller:
         pass
 
     def clickPixel(self,x,y):
-        pyautogui.moveTo(x,y)
+        pyautogui.moveTo(x=x,y=y,duration=0.15)
         pyautogui.click()
 
     #clicks in random location in box and returns values of where mouse clicked
