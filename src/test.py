@@ -4,12 +4,17 @@ import os
 import cv2
 import numpy as np
 import imutils
-from yolo.runemodel import Rune_model
+import time
+
 from time import sleep
 from graph import Vertex
 from graph import MapGraph
 
+from botclient import BotClient
+from yolo.runemodel import Rune_model
+
 import subprocess
+import mss
 
 from navigator import Navigator
 from controller import Controller
@@ -35,6 +40,302 @@ from controller import Controller
 # g.addEdge(v2,v3)
 # g.addEdge(v1,v3)
 
+#########################################
+# Testing Screenshot Detect Object Gone #
+#########################################
+# def mse(imageA, imageB):
+#         # the 'Mean Squared Error' between the two images is the
+#         # sum of the squared difference between the two images;
+#         # NOTE: the two images must have the same dimension
+#         err = np.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+#         err /= float(imageA.shape[0] * imageA.shape[1])
+        
+#         # return the MSE, the lower the error, the more "similar"
+#         # the two images are
+#         return err
+
+# subprocess.call(['clear'])
+
+# model = Rune_model()
+# model.load()
+
+client = BotClient(None, 1, None)
+client.controller.screenshot()
+    
+#client.giveTask('go', ['lumbridge_north_farm'])
+#client.giveTask('go',['1234','5678'])
+#client.giveTask('farm_common_trees')
+#client.executeAction('navigate lumbridge_north_farm')
+# client.executeAction('open map')
+# sleep(1)
+# client.executeAction('open overview')
+# sleep(4)
+# client.executeAction('close map')
+# client.giveTask('farm_common_trees')
+# client.startTask()
+
+# with mss.mss() as sct:
+#         centerx=client.controller.centerx
+#         centery=client.controller.centery
+#         region={}
+#         region['top']=centery-25
+#         region['left']=centerx-25
+#         region['width']=50
+#         region['height']=50
+
+#         me = float('-inf')
+#         while True:
+#                 t0 = time.time()
+                
+#                 s0 = sct.grab(region)
+#                 sleep(0.25)
+#                 s1 = sct.grab(region)
+
+#                 e = mse(np.array(s0),np.array(s1))
+
+#                 me = e if e > me else me
+
+#                 print('e:',e,'me:',me,'t:',time.time()-t0,end='\r')
+
+#                 #ss = im.frombytes("RGB", ss.size, ss.bgra, "raw", "BGRX")
+#                 #ss.save('test2.png')
+#                 sleep(1)
+
+
+
+## LEFT OFF HERE
+# use pyauto.screenshot difference and check difference after a tree is cut 
+# this way has promise but need to find away to accurately screenshot the exact object or it won't work
+# there are too many other variables that can affect the screenshot error
+
+# # if 315 < obj['angle'] or obj['angle'] < 45:
+# #     #going to approach object from left
+# #     region['top'] = centery-obj['height']
+# #     region['left'] = centerx
+
+# # elif 45 < obj['angle'] and obj['angle'] < 135:
+# #     #going to approach object from bottom
+# #     region['top'] = centery-1.5*obj['height']
+# #     region['left'] =centerx-obj['width']
+
+# # elif 135 < obj['angle'] and obj['angle'] < 225:
+# #     #going to approach object from right
+# #    region['top'] = centery-obj['height']
+# #    region['left'] =centerx-1.5*obj['width']
+
+# # elif 225 < obj['angle'] and obj['angle'] < 315:
+# #     #going to approach object from top
+# #     region['top'] = centery
+# #     region['left'] =centerx-obj['width']
+
+# centerx = self.controller.centerx
+# centery = self.controller.centery
+
+# x1 = obj['centerx']-centerx
+# y1 = obj['centery']-centery
+
+# m = y1/x1
+# b = centery - m*centerx
+
+# xl = obj['left']
+# yt = obj['top']
+# xr = obj['right']
+# yb = obj['bottom']
+
+# yil = xl*m + b
+# xit = (yt-b) / m
+# yir = xr*m + b
+# xib = (yb-b) / m
+
+
+
+# points = [(xl,yil),(xit,yt),(xr,yir),(xib,yb)]
+# pointsOnBox = []
+# for p in points:
+#     if xl <= p[0] and p[0] <= xr and yt <= p[1] and p[1] <= yb:
+#         pointsOnBox.append(p)
+
+# minDis = float('inf')
+# minP = None
+# for p in pointsOnBox:
+#     dis = self.controller.dis(centerx,centery,p[0],p[1])
+#     if(dis < minDis):
+#         minDis = dis
+#         minP = p
+
+# xDif = obj['left']-minP[0]
+# yDif = obj['top']-minP[1]            
+
+
+# if  315 < obj['angle'] or obj['angle'] < 45:
+#     #going to approach object from left-bottom tile
+#     print('left-bottom')
+
+# elif 45 < obj['angle'] and obj['angle'] < 90:
+#     #going to approach object from bottom-left tile
+#     print('bottom-left')
+#     xDif += 37
+#     yDif -= 12
+
+# elif 90 < obj['angle'] and obj['angle'] < 135:
+#     #going to approach object from bottom-right tile
+#     print('bottom-right')
+#     pass
+
+# elif 135 < obj['angle'] and obj['angle'] < 180:
+#     #going to approach object from right-bottom tile
+#     print('right-bottom')
+#     pass
+
+# elif 180 < obj['angle'] and obj['angle'] < 225:
+#     #going to approach object from right-top tile
+#     pass
+
+# elif 225 < obj['angle'] and obj['angle'] < 270:
+#     #going to approach object from right
+#     pass
+
+# elif 240 < obj['angle'] and obj['angle'] < 300:
+#     #going to approach object from top
+#     pass
+
+# elif 300 < obj['angle'] and obj['angle'] < 330:
+#     #going to approach object from top-left
+#     pass
+
+
+
+# region = {}
+# region['left'] = centerx + xDif
+# region['top'] = centery + yDif
+# region['width'] = obj['width']
+# region['height'] = obj['height']
+
+# for k in region.keys():
+#     region[k] = int(region[k])
+
+# print(obj)
+# print(minP)
+# print(xDif,yDif)
+# print(region)
+
+
+
+# # print(obj)
+# # print(difVec[0], difVec[1])
+# # print(region)
+
+# with mss.mss() as sct:
+#     ss=sct.grab(sct.monitors[1])
+#     im = Image.frombytes("RGB", ss.size, ss.bgra, "raw", "BGRX")
+#     im.save('im.png')
+
+#     ss=sct.grab(region)
+#     im = Image.frombytes("RGB", ss.size, ss.bgra, "raw", "BGRX")
+#     im.save('imr.png')
+
+#     maxErr = float('-inf')
+#     while(True):
+#         t0 = time.time()
+#         ss1 = sct.grab(region)
+#         sleep(0.1)
+#         ss2 = sct.grab(region)
+
+#         err = self.controller.mse(np.array(ss1),np.array(ss2))
+#         maxErr = err if err > maxErr else maxErr
+#         print('e:',err,'me:',maxErr,'t:',time.time()-t0, end='\r')
+#         if maxErr > 200:
+#             break
+
+# with mss.mss() as sct:
+#     client.executeAction('see')
+#     print(client.objects)
+#     centerx = client.controller.centerx
+#     centery = client.controller.centery
+#     #left
+#     region = {
+#         'top':centery-client.objects[1]['height'],
+#         'left':centerx,
+#         'width':2*client.objects[1]['width'],
+#         'height':2*client.objects[1]['height']
+#     } 
+#     print(region)
+#     input()
+   
+#     while(True):
+#         t0 = time.time()
+#         ss1 = sct.grab(sct.monitors[1])
+#         input()
+#         ss2 = sct.grab(sct.monitors[1])
+
+#         err = mse(np.array(ss1),np.array(ss2))
+#         print('e:',err,'t:',time.time()-t0, end='\r')
+#         sleep(1)
+##
+## Attempt 2
+##
+# # assume we will walk up next to object so check for it based on the players location
+# # try to predict the coordinates of where the object will be after bot walks to it
+# # resolves problem of first attempt by not requiring another click
+
+# xoffset = 0
+# yoffset = 0
+
+# offesetFac=.8
+
+# #based on angle to object adjust offset on where to find object 
+# if 315 < obj['angle'] or obj['angle'] < 45:
+#     #going to approach object from left
+#     xoffset = obj['width']*offesetFac
+
+# elif 45 < obj['angle'] and obj['angle'] < 135:
+#     #going to approach object from bottom
+#     yoffset = -obj['height']*offesetFac
+
+# elif 135 < obj['angle'] and obj['angle'] < 225:
+#     #going to approach object from right
+#     xoffset = -obj['width']*offesetFac
+
+# elif 225 < obj['angle'] and obj['angle'] < 315:
+#     #going to approach object from top
+#     yoffset = obj['height']*offesetFac
+
+######################
+## Debugging prints ##
+######################
+# print(obj)
+# print('Angle:', obj['angle'])
+# print('xOffset:',xoffset,'yOffset:',yoffset)
+# print('NewX:',(1280-36)//2 + xoffset,'NewY:',720//2 + yoffset)
+
+#while object is there chill until it's farmed then look again and repeat
+# while True:
+#     self.executeAction('see')
+
+#     if(not self.controller.objectIsAtCoord((1280-36)//2 + xoffset, 720//2 + yoffset, param[0], self.objects)):
+#         break
+#     sleep(3)
+
+##############
+#first attempt # not deleting yet incase second attempt doesn't work with other objects
+##############
+#after moving to object from first click look again and refind object
+#click object again resetting its coordinates before the farm loop starts
+#problem: sometimes it disappears since looking again takes a lot of time and it has already been farmed
+#this leads the bot to clicking again when it shouldn't wasting some time
+#results are good though, as the bot doesn't get 'locked up' since the second click just moves the bot 
+#then the loop continues and it finds another tree
+
+#look again to reset coordinates of object
+# self.executeAction('see')
+
+#reclick object 
+# self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
+
+# while True:
+#     self.executeAction('see')
+#     if(not self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
+#         break
 
 
 
@@ -42,11 +343,11 @@ from controller import Controller
 # Testing Navigation #
 ######################
 
-subprocess.call(['clear'])
+# subprocess.call(['clear'])
 
-navi = Navigator(Controller(1,None), 1280, 720)
-#navi.printLocation()
-navi.macroNavigate(place='lumbridge_north_farm')
+# navi = Navigator(Controller(1,None), 1280, 720)
+# #navi.printLocation()
+# navi.macroNavigate(place='lumbridge_north_farm')
 
 #navi.macroNavigate(5846, 2025)
 

@@ -6,6 +6,8 @@ import cv2
 import numpy as np
 import imutils
 import pyautogui
+import mss
+
 
 from time import sleep
 from math import sqrt
@@ -16,8 +18,8 @@ from navigator import Navigator
 class Controller:
     # model = Rune_model()
     #pixel is roughly center of screen
-    centerx=(1280-36)//2
-    centery=720//2
+    centerx=(1280-26)//2
+    centery=(720+12)//2
     resH = 720
     resW = 1280
     modelLoaded = False
@@ -35,6 +37,13 @@ class Controller:
     def screenshot(self, im_name='image.png', ):
         pyautogui.screenshot(im_name)
 
+    def navigate(self,destX=0,destY=0,place=None):
+        if(place):
+            self.navigator.macroNavigate(place=place)
+        else:
+            self.navigator.macroNavigate(destX,destY)
+
+
     def findIcon(self, im_name=None, confidence=.80):
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
         
@@ -43,7 +52,7 @@ class Controller:
         return box
 
     def clickIcon(self, ic_name):
-        box = findIcon(ic_name)
+        box = self.findIcon(ic_name)
         self.clickIconBox(box)
 
 
@@ -88,21 +97,45 @@ class Controller:
 
     def moving(self,thresh=100,print=False):
         #screenshot funcion takes ~100ms
-        im_one = np.array(pyautogui.screenshot())
-        im_two = np.array(pyautogui.screenshot())
-        
-        error = self.mse(im_one, im_two)
-        moving = True if error > thresh else False
+        with mss.mss() as sct:
+            im_one = np.array(sct.grab(sct.monitors[1]))
+            sleep(0.05)
+            im_two = np.array(sct.grab(sct.monitors[1]))
+            
+            error = self.mse(im_one, im_two)
+            moving = True if error > thresh else False
 
-        if(print):
-            print('error:',error)
-            print('moving:',moving)
+            if(print):
+                print('error:',error)
+                print('moving:',moving)
 
-        return moving
+            return moving
+
+    def farming(self, thresh=400):
+        with mss.mss() as sct:
+            region={}
+            region['top']=self.centery-25
+            region['left']=self.centerx-25
+            region['width']=50
+            region['height']=50
+
+            me = float('-inf')
+
+            # t0 = time.time()
+            
+            s0 = sct.grab(region)
+            sleep(0.25)
+            s1 = sct.grab(region)
+
+            e = self.mse(np.array(s0),np.array(s1))
+            farming = True if e > thresh else False
+            return farming
+
+        #print('e:',e,'me:',me,'t:',time.time()-t0,end='\r')
 
     # TODO: implement
     def clickIconBox(self,box):
-        pass
+        pyautogui.click(box['centerx'],box['centery'])
 
     def clickPixel(self,x,y):
         pyautogui.moveTo(x=x,y=y,duration=0.15)
@@ -158,7 +191,7 @@ class Controller:
     def calcObjAngle(self, obj):
         #calc angle 
         vec1 = [1,0]
-        vec2 = [obj['centerx'] - (1280-36)//2, obj['centery'] - 720//2]
+        vec2 = [obj['centerx'] - self.centerx, obj['centery'] - self.centery]
         return self.angle(vec1,vec2)
 
     def angle(self, vec1, vec2):

@@ -10,6 +10,10 @@ import importlib
 from controller import Controller
 from time import sleep
 
+from PIL import Image
+import mss
+import time
+
 #Will handle all the task logic
 class BotClient:
     def __init__(self, master, client_num, model):
@@ -19,6 +23,7 @@ class BotClient:
         self.messageQ = queue.Queue()
         self.objects = {}
         self.task={}
+        self.allTasks= self.parseTasks()
         self.controller = Controller(client_num, model)
 
     def watchQ(self):
@@ -28,8 +33,34 @@ class BotClient:
     def sendMessage(self, message):
         self.messageQ.put(message)
 
-    def giveTask(self, task_name):
-        self.task = self.parseTask(task_name)
+    #function will parse task and ready it to be started
+    #good for now might get weird with different arguments
+    def giveTask(self, task_name, params:list=None):
+        #key to replace #value to replace with
+        def replaceInDict(d,key,value):
+            for k in d:
+                d[k] = d[k].replace(key,value)
+                if(d[k]).endswith(' '):
+                    d[k] = d[k][0:len(d[k])-1]
+
+        task = self.allTasks[task_name]
+        if task.get('required'):
+            req = task.get('required').split(',')
+            opt = task.get('optional').split(',') if task.get('optional') else None
+
+            if len(req) > len(params):
+                raise AssertionError('There are required parameters not present')
+            for i,var in enumerate(req):
+                replaceInDict(task,var,params[i])
+            if opt:
+                numLeft = len(params) - len(req)
+                if(numLeft):
+                    params = params[len(req):]
+                    for i,var in enumerate(opt):
+                        replaceInDict(task,var,params[i])
+                else:
+                    for i,var in enumerate(opt):
+                        replaceInDict(task,var,'')
         return self.task
 
     def startTask(self):
@@ -44,31 +75,35 @@ class BotClient:
     def stopTask(self):
         self.inTask = False
 
-    def parseTask(self, task_name):
-        with open('tasks.cfg', 'r') as file:
+    #function will read tasks from cfg file
+    def parseTasks(self):
+        allTasks = dict()
+        with open('tasks.cfg', 'r') as file: 
             lines = file.readlines()
-            for i in range(len(lines)):
-                if(lines[i].startswith('[')):
-                    task = {}
-                    while(True):
-                        i+=1
+            curTask = dict()
+            reading=False
+            for line in lines:
+                line = line.strip('\n')
+                if line.startswith('#'):
+                    continue
+                if line == '':
+                    continue
 
-                        if(lines[i].startswith('[')):
-                            break
-
-                        key = lines[i].split('=')[0].strip('\r\n')
-                        value = lines[i].split('=')[1].strip('\r\n')
-                        task[key] = value
+                if line.startswith('['):
+                    if reading:
+                        allTasks[curTask['name']] = curTask
+                        curTask = dict()
+                    reading = not reading
+                    continue
                     
-                    if(task['name'] == task_name):
-                        task['loop'] = task['loop'].split(',')
-                        print(task)
-                        return task
-
+                if reading:
+                    key = line.split('=')[0]
+                    value = line.split('=')[1]
+                    curTask[key] = value           
+        return allTasks
+                    
     #will call appropiate functions in controller/python libs to execute action
     def executeAction(self, action):
-        print(self.controller.findAllIcons('logs'))
-
         actionList = action.split(' ')
 
         action = actionList[0]
@@ -95,95 +130,31 @@ class BotClient:
             #lock bot until it stops moving
             self.executeAction('move')
 
-            ##############
-            #first attempt # not deleting yet incase second attempt doesn't work with other objects
-            ##############
-            #after moving to object from first click look again and refind object
-            #click object again resetting its coordinates before the farm loop starts
-            #problem: sometimes it disappears since looking again takes a lot of time and it has already been farmed
-            #this leads the bot to clicking again when it shouldn't wasting some time
-            #results are good though, as the bot doesn't get 'locked up' since the second click just moves the bot 
-            #then the loop continues and it finds another tree
+            sleep(0.5)
 
-            #look again to reset coordinates of object
-            # self.executeAction('see')
+            while(self.controller.farming()):
+                print('farming...',end='\r')
+                sleep(1)
+            print('object farmed...')
 
-            #reclick object 
-            # self.lastClickX, self.lastClickY = self.controller.clickObject(param[0], self.objects)
-
-            # while True:
-            #     self.executeAction('see')
-            #     if(not self.controller.objectIsAtCoord(self.lastClickX, self.lastClickY, param[0], self.objects)):
-            #         break
-
-            ################
-            ##second attempt
-            ################
-            # assume we will walk up next to object so check for it based on the players location
-            # try to predict the coordinates of where the object will be after bot walks to it
-            # resolves problem of first attempt by not requiring another click or another 'look'
-
-            xoffset = 0
-            yoffset = 0
-
-            offesetFac=.8
-
-            #based on angle to object adjust offset on where to find object 
-            if 315 < obj['angle'] and obj['angle'] < 45:
-                #going to approach object from left
-                xoffset = obj['width']*offesetFac
-
-            elif 45 < obj['angle'] and obj['angle'] < 135:
-                #going to approach object from bottom
-                yoffset = -obj['height']*offesetFac
-
-            elif 135 < obj['angle'] and obj['angle'] < 225:
-                #going to approach object from right
-                xoffset = -obj['width']*offesetFac
-
-            elif 225 < obj['angle'] and obj['angle'] < 315:
-                #going to approach object from top
-                yoffset = obj['height']*offesetFac
-
-            ######################
-            ## Debugging prints ##
-            ######################
-            # print(obj)
-            # print('Angle:', obj['angle'])
-            # print('xOffset:',xoffset,'yOffset:',yoffset)
-            # print('NewX:',(1280-36)//2 + xoffset,'NewY:',720//2 + yoffset)
-
-            #while object is there chill until it's farmed then look again and repeat
-            while True:
-                self.executeAction('see')
-                
-                if(not self.controller.objectIsAtCoord((1280-36)//2 + xoffset, 720//2 + yoffset, param[0], self.objects)):
-                    break
-                sleep(3)
-
-            #################
-            # Third attempt #
-            #################
-            # use pyauto.screenshot difference and check difference after a tree is cut 
-            # only screenshot around character and object and when it breaks threshhold object must be gone
-            # problem: could be thrown off by other players or farmers
-            # problem: might be hard to figure out exactly what area to screenshot - but could use angle then height and width to roughly encapsolate it 
-            # if it took up a fairly constant % of the screen the results would be good
-            
-            #steps - figureout how to calculate screenshot height and width and 'offset' depending on angle im approaching it from 
-            # maybe just have a big box around me in every direction, that is sort of based on object height-width? 
-
-            # test with two accounts figure out threshold for player walking in 'my box' vs tree vs player farming another tree nearby
-
-            # if it looks like theres a pretty consistant threshold make endless while in controller that given an obj will only break when the object disappears
-            
-            #boom - fastest and possible even more accurate than second idea, which still relies on the nueral network to reget objects 
+        elif action == 'navigate':
+            #[0] place to go to if [1] is None else rawX
+            #[1] if set then rawY
+            if(len(param)>1):
+                #navigate to rawX rayW
+                self.controller.navigate(int(param[0]),int(param[1]))
+            else:
+                self.controller.navigate(place=param[0])
 
         elif action == 'click':
             #[0] = object to click 
             #Save last click location
-            self.lastClickX, self.lastClickY = self.controller.clickObject(param[0],self.objects)
-        
+            self.lastClickX, self.lastClickY = self.controller.clickObject(param[1],self.objects)
+
+        elif action == 'open' or action == 'close' or action == 'select':
+            #[0] icon to select to open/close - should be name of object being opened ie inventory,map,etc..
+            self.controller.clickIcon(param[0])
+
         elif action == 'move':
             #will lock bot until it stops moving
             while(self.controller.moving()):
