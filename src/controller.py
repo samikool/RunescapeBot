@@ -7,7 +7,8 @@ import numpy as np
 import imutils
 import pyautogui
 import mss
-
+import time
+import PIL.Image as im
 
 from time import sleep
 from math import sqrt
@@ -24,10 +25,10 @@ class Controller:
     resW = 1280
     modelLoaded = False
     
-    def __init__(self, display, model):
+    def __init__(self, display, model, map_g, worldmap):
         Controller.model = model
         self.display=display
-        self.navigator = Navigator(self, self.resW, self.resH)
+        self.navigator = Navigator(self, map_g, worldmap, self.resW, self.resH)
 
     def mouseLoop(self, num):
         while(True):
@@ -36,6 +37,39 @@ class Controller:
 
     def screenshot(self, im_name='image.png', ):
         pyautogui.screenshot(im_name)
+        
+    def type(self, s):
+        pyautogui.write(s)
+        
+    def press(self,k):
+        pyautogui.press(k)
+
+    def pressMultiple(self,keys):
+        #first keys are held last key is pressed
+        hKeys = keys[0:len(keys)-1]
+        pKey = keys[-1]
+
+        #hold first keys down
+        for k in hKeys:
+            pyautogui.keyDown(k)
+
+        #press final key
+        pyautogui.press(pKey)
+
+        #unhold first keys
+        for k in hKeys:
+            pyautogui.keyUp(k)
+
+    #for some reason keyDown doesn't work in textfields
+    def hold(self, k, i):
+        if k == 'backspace':
+            t0 = time.time()
+            while(time.time()-t0 < i):
+                pyautogui.press(k)
+        else:
+            pyautogui.keyDown(k)
+            sleep(i)
+            pyautogui.keyUp(k)
 
     def navigate(self,destX=0,destY=0,place=None):
         if(place):
@@ -48,12 +82,15 @@ class Controller:
         path = os.path.join(os.path.abspath(os.path.curdir), 'icons/'+str(im_name)+'.png')
         
         icon = pyautogui.locateOnScreen(path,confidence=confidence)
-        box = self.convertIconToBox(icon)
+        box = self.convertIconToBox(icon) if icon else None
         return box
 
-    def clickIcon(self, ic_name):
-        box = self.findIcon(ic_name)
+    def clickIcon(self, ic_name, confidence=.80):
+        box = self.findIcon(ic_name, confidence)
+        if(box is None):
+            return False
         self.clickIconBox(box)
+        return True
 
 
     def findAllIcons(self, im_name=None, confidence=.80):
@@ -66,6 +103,65 @@ class Controller:
             boxList.append(self.convertIconToBox(icon))
 
         return boxList
+
+    def mapOpen(self):
+        return self.navigator.mapOpen()
+
+    def inventoryFull(self):
+        top = 4
+        bot = 3
+        left = 16
+        right = 16
+        vgap = 5
+        hgap = 10
+
+        region = {}
+        region['left'] = left+1049
+        region['top'] = top+391
+        region['width'] = 190-right-left
+        region['height'] = 261-bot-top
+        
+        img = None
+        with mss.mss() as sct:
+            img = sct.grab(region)
+            img = im.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
+
+        rangeX = []
+        rangeY = []
+
+        for i in range(4):
+            rangeX.append(range(i*32+i*hgap, i*hgap+(i+1)*32))
+        for i in range(7):
+            rangeY.append(range(i*32+i*vgap, i*vgap+(i+1)*32))
+
+        item = []
+        for ry in rangeY:
+            for rx in rangeX:
+                invC = 0
+                itemC = 0
+                for y in ry:
+                    for x in rx:
+                        r,g,b = img.getpixel((x,y))
+                        if r == 62 and g == 53 and b == 41:
+                            invC += 1
+                        elif r == 59 and g == 50 and b == 38:
+                            invC += 1
+                        elif r == 64 and g == 54 and b == 44:
+                            invC += 1
+                        elif r == 64 and g == 56 and b == 45:
+                            invC += 1
+                        else:
+                            itemC += 1
+                
+                #prevents divide by 0
+                if not invC:
+                    return False
+
+                if itemC / invC > .10:
+                    item.append(1)
+                else:
+                    item.append(0)
+        return True if item.count(1) == 28 else False
 
     #this box could be useful for other things too
     #it represents what an 'object' looks like to our bot without the class name
@@ -135,7 +231,9 @@ class Controller:
 
     # TODO: implement
     def clickIconBox(self,box):
-        pyautogui.click(box['centerx'],box['centery'])
+        pyautogui.moveTo(box['centerx'],box['centery'])
+        sleep(0.05)
+        pyautogui.click()
 
     def clickPixel(self,x,y):
         pyautogui.moveTo(x=x,y=y,duration=0.15)

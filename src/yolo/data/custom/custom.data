@@ -1,4 +1,4 @@
-classes=4
-train=/git/yolo_runescapebot/yolo/data/custom/custom.txt
-valid=/git/yolo_runescapebot/yolo/data/custom/custom.txt
-names=/git/yolo_runescapebot/yolo/data/custom/custom.names
+classes=5
+train=/git/runescapebot/src/yolo/data/custom/train.txt
+valid=/git/runescapebot/src/yolo/data/custom/valid.txt
+names=/git/runescapebot/src/yolo/data/custom/custom.names

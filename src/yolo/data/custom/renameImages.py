@@ -3,7 +3,7 @@ import re
 import json
 from tqdm import tqdm
 
-def renamePictures(currentDirectory, imageDirectory, labelDirectory):
+def renamePictures(currentDirectory, imageDirectory):
     imageList = os.listdir(imageDirectory)
     imageList.sort()
     pattern = re.compile("^image")
@@ -34,8 +34,7 @@ def renamePictures(currentDirectory, imageDirectory, labelDirectory):
             tqdm.write(str(file)+' -> image'+f"{imageNum:010d}"+".png\r", end="")
 
 currentDirectory = os.path.abspath(os.path.curdir)
-imageDirectory = os.path.join(currentDirectory, 'images')
-labelDirectory = os.path.join(currentDirectory, 'labels')
+imageDirectory = os.path.join(currentDirectory, 'named_images')
 
 print('Renaming images...')
-renamePictures(currentDirectory, imageDirectory, labelDirectory)
+renamePictures(currentDirectory, imageDirectory)

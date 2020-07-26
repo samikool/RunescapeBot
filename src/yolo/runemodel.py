@@ -1,9 +1,7 @@
 import argparse
-
 from yolo.models import *
 from yolo.utils.datasets import *
 from yolo.utils.utils import *
-
 from time import sleep
 
 class Rune_model(object):
@@ -88,6 +86,7 @@ class Rune_model(object):
         #Run inference
         t0 = time.time()
 
+
         img = torch.zeros((1, 3, self.stuff['imgsz'], self.stuff['imgsz']), device=self.stuff['device'])  # init img
         img = torch.from_numpy(imgg).to(self.stuff['device'])
         img = img.float()  # uint8 to fp16/32
@@ -152,5 +151,6 @@ class Rune_model(object):
 
         #print('Done. (%.3fs)' % (time.time() - t0))
         self.imageCount += 1
-        #print(len(objects),'objects detected')
+        
+        print(len(objects),'objects detected')
         return objects

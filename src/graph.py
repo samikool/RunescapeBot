@@ -1,5 +1,5 @@
 from math import sqrt
-
+import heapq
 
 class Vertex:
     def __init__(self,key,data):
@@ -73,6 +73,55 @@ class MapGraph(Graph):
     #this init will read our graph cfg file eventually
     def __init__(self):
         super().__init__()
+
+    def load(self):        
+        nodes = self.parseMapCfg()
+        self.createGraph(nodes)
+
+
+    def createGraph(self, mapnodes):
+        #create each verticie and add it to graph
+        for node in mapnodes.values():
+            v = Vertex(node['name'],(int(node['x']),int(node['y'])))
+            self.addVertex(v)
+
+        #connecect verticies based on neighbors list
+        for node in mapnodes.values():
+            neighbors = node['neighbors'].split(',')
+
+            for n in neighbors:
+                self.addEdge(self.vertList[node['name']],self.vertList[n])
+
+
+    #parse map cfg and return a graph
+    def parseMapCfg(self):
+        allMapNodes = dict()
+        with open('mapnodes.cfg', 'r') as file:
+            lines = file.readlines()
+            
+            curMapNode = dict()
+            reading = False
+            for line in lines:
+                line = line.strip('\n')
+
+                if line.startswith('#'):
+                    continue
+
+                if line == '':
+                    continue
+
+                if line.startswith('['):
+                    if reading:
+                        allMapNodes[curMapNode['name']] = curMapNode
+                        curMapNode = dict()
+                    reading = not reading
+                    continue
+                
+                if reading:
+                    key = line.split('=')[0]
+                    value = line.split('=')[1]
+                    curMapNode[key]=value
+        return allMapNodes
     
     # TODO: eventually move this to utility function py file
     def dis(self, x1, y1, x2, y2):
@@ -96,6 +145,9 @@ class MapGraph(Graph):
                 minV = v
         return minV
 
+    
+    #TODO: switch to priority q with minHeap heapq library
+    #TODO: probably can precalculate all of this on initialization
     def findPath(self, startV, endV):
         distance = {}
         parent = {}
@@ -103,7 +155,6 @@ class MapGraph(Graph):
             distance[v] = float('inf')
             parent[v] = None
         
-        #TODO: probably can precalculate all of this on initialization
         #find mst (dijkstra's) 
         q = list()
         distance[startV.key] = 0

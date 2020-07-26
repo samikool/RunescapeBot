@@ -13,15 +13,13 @@ from graph import MapGraph
 from graph import Vertex
 
 class Navigator:
-    def __init__(self, controller, resHorz, resVert):
+    def __init__(self, controller, mapGraph, worldmap, resHorz, resVert):
         self.controller = controller
         self.resHorz = resHorz
         self.resVert = resVert
         #load worldmap ahead of time
-        self.worldmap = cv2.imread('worldmap.png')
-        
-        mapnodes = self.parseMapCfg()
-        self.mapGraph = self.createGraph(mapnodes)
+        self.worldmap = worldmap
+        self.mapGraph = mapGraph
 
         #Region represents the bigMap #top,left,width,height
         self.bigmapRegion = (
@@ -39,61 +37,16 @@ class Navigator:
             112,    #height
         )
 
-    def createGraph(self, mapnodes):
-        g = MapGraph()
-        verts = {}
-        #create each verticie and add it to graph
-        for node in mapnodes.values():
-            verts[node['name']] = Vertex(node['name'],(int(node['x']),int(node['y'])))
-            g.addVertex(verts[node['name']])
-
-        #connecect verticies based on neighbors list
-        for node in mapnodes.values():
-            neighbors = node['neighbors'].split(',')
-
-            for n in neighbors:
-                g.addEdge(verts[node['name']],verts[n])
-        return g
-
-
-    #parse map cfg and return a graph
-    def parseMapCfg(self):
-        allMapNodes = dict()
-        with open('mapnodes.cfg', 'r') as file:
-            lines = file.readlines()
-            
-            curMapNode = dict()
-            reading = False
-            for line in lines:
-                line = line.strip('\n')
-
-                if line.startswith('#'):
-                    continue
-
-                if line == '':
-                    continue
-
-                if line.startswith('['):
-                    if reading:
-                        allMapNodes[curMapNode['name']] = curMapNode
-                        curMapNode = dict()
-                    reading = not reading
-                    continue
-                
-                if reading:
-                    key = line.split('=')[0]
-                    value = line.split('=')[1]
-                    curMapNode[key]=value
-        return allMapNodes
-
-            
-
-
     def printLocation(self):
         while True:
             t0=time.time()
             x,y = self.getLocation()
             print('x:',x,'y:',y,'time:',time.time()-t0,end='\r')
+
+    def mapOpen(self):
+        if not getLocation():
+            return False
+        return True
         
     def microNavigate(self,destX,destY):
         arrived = False
@@ -208,7 +161,10 @@ class Navigator:
                 pixel = overviewShot.getpixel((x,y))
                 if pixel[0]>190 and pixel[1] < 100 and pixel[2] < 100:
                     pixelList.append((x,y))
-        
+
+        if(not len(pixelList)):
+            return False
+
         left = pixelList[0][0]
         top = pixelList[0][1]
 
@@ -250,7 +206,3 @@ class Navigator:
         y = (top_left[1] + bot_right[1]) // 2
 
         return (x,y)
-
-        
-
-

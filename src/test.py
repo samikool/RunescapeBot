@@ -5,22 +5,132 @@ import cv2
 import numpy as np
 import imutils
 import time
+import queue
+import utils
 
 from time import sleep
 from graph import Vertex
 from graph import MapGraph
 
 from botclient import BotClient
+import botclient
 from yolo.runemodel import Rune_model
 
+import pyautogui
 import subprocess
 import mss
+import threading
 
 from navigator import Navigator
 from controller import Controller
 #########################################
 # This file is for any random test code #
 #########################################
+
+#################
+# Test ProcessQ #
+#################
+
+import time
+import random
+
+from multiprocessing import Process, Queue, current_process, freeze_support
+
+
+# def p(x):
+#     print(threading.currentThread().name ,x)
+
+# t1 = threading.Thread(target=p, args=['hello'], name='t1')
+# t2 = threading.Thread(target=p, args=['hello'], name='t2')
+# t3 = threading.Thread(target=p, args=['hello'], name='t3')
+# t4 = threading.Thread(target=p, args=['hello'], name='t4')
+# t5 = threading.Thread(target=p, args=['hello'], name='t5')
+
+# t1.start()
+# t2.start()
+# t3.start()
+# t4.start()
+# t5.start()
+
+# while(True):
+#     print(threading.currentThread().name, 'hi')
+#     print(t1.is_alive())
+#     print(t2.is_alive())
+#     sleep(5)
+
+
+#
+# Function run by worker processes
+#
+
+# def worker(input, output):
+#     for func, args in iter(input.get, 'STOP'):
+#         result = calculate(func, args)
+#         output.put(result)
+
+# #
+# # Function used to calculate result
+# #
+
+# def calculate(func, args):
+#     result = func(*args)
+#     return '%s says that %s%s = %s' % \
+#         (current_process().name, func.__name__, args, result)
+
+# #
+# # Functions referenced by tasks
+# #
+
+# def mul(a, b):
+#     time.sleep(0.5*random.random())
+#     return a * b
+
+# def plus(a, b):
+#     time.sleep(0.5*random.random())
+#     return a + b
+
+# #
+# #
+# #
+
+# def test():
+#     NUMBER_OF_PROCESSES = 4
+#     TASKS1 = [(mul, (i, 7)) for i in range(20)]
+#     TASKS2 = [(plus, (i, 8)) for i in range(10)]
+
+#     # Create queues
+#     task_queue = Queue()
+#     done_queue = Queue()
+
+#     # Submit tasks
+#     for task in TASKS1:
+#         task_queue.put(task)
+
+#     # Start worker processes
+#     for i in range(NUMBER_OF_PROCESSES):
+#         Process(target=worker, args=(task_queue, done_queue)).start()
+
+#     # Get and print results
+#     print('Unordered results:')
+#     for i in range(len(TASKS1)):
+#         print('\t', done_queue.get())
+
+#     # Add more tasks using `put()`
+#     for task in TASKS2:
+#         task_queue.put(task)
+
+#     # Get and print some more results
+#     for i in range(len(TASKS2)):
+#         print('\t', done_queue.get())
+
+#     # Tell child processes to stop
+#     for i in range(NUMBER_OF_PROCESSES):
+#         task_queue.put('STOP')
+
+
+# if __name__ == '__main__':
+#     freeze_support()
+#     test()
 
 
 #################
@@ -53,14 +163,110 @@ from controller import Controller
 #         # return the MSE, the lower the error, the more "similar"
 #         # the two images are
 #         return err
+#subprocess.call(['clear'])
 
-# subprocess.call(['clear'])
+
+
+# top = 4
+# bot = 3
+# left = 16
+# right = 16
+# vgap = 5
+# hgap = 10
+
+# # img = pyautogui.screenshot(region=(
+# #     left+1049,
+# #     top+391,
+# #     190-right-left,
+# #     261-bot-top)
+# # )
+
+
+
+# img = None
+# region = {}
+# region['left'] = left+1049
+# region['top'] = top+391
+# region['width'] = 190-right-left
+# region['height'] = 261-bot-top
+
+# with mss.mss() as sct:
+#     img = sct.grab(region)
+#     img = im.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
+
+# rangeX = []
+# rangeY = []
+
+# for i in range(4):
+#     rangeX.append(range(i*32+i*hgap, i*hgap+(i+1)*32))
+# for i in range(7):
+#     rangeY.append(range(i*32+i*vgap, i*vgap+(i+1)*32))
+
+# item = []
+
+# for ry in rangeY:
+#     for rx in rangeX:
+#         invC = 0
+#         itemC = 0
+#         for y in ry:
+#             for x in rx:
+#                 r,g,b = img.getpixel((x,y))
+#                 if r == 62 and g == 53 and b == 41:
+#                     invC += 1
+#                 elif r == 59 and g == 50 and b == 38:
+#                     invC += 1
+#                 elif r == 64 and g == 54 and b == 44:
+#                     invC += 1
+#                 elif r == 64 and g == 56 and b == 45:
+#                     invC += 1
+#                 else:
+#                     itemC += 1
+
+#         if itemC / invC > .10:
+#             item.append(1)
+#         else:
+#             item.append(0)
+
+# i=0
+# for y in range(7):
+#     for x in range(4):
+#         print(str(item[i])+',',end='')
+#         i += 1
+#     print('')
+
+        
+
+                
+
+# for y in range(im.height):
+#     for x in range(im.width):
+#         if x in rangeX and y in rangeY:
+#             im.putpixel((x,y), (0,0,255))
 
 # model = Rune_model()
 # model.load()
 
-client = BotClient(None, 1, None)
-client.controller.screenshot()
+# inq = queue.Queue
+# oq = queue.Queue
+
+# tasks = utils.parseTasks()
+
+# client = botclient.create(None, oq, inq, model, None, None, tasks)
+
+
+# while True:
+#     print(client.controller.inventoryFull(),end='\r')
+#     sleep(1)
+# client.giveTask('login', ['sam.morgan44@gmail.com','samikool44','world393'])
+# client.startTask()
+# input('press enter to continue')
+
+# client.giveTask('goto',['port_sarim_dropoff'])
+# client.startTask()
+# input('press enter to continue')
+
+# client.executeAction('press shift+')
+# client.controller.screenshot()
     
 #client.giveTask('go', ['lumbridge_north_farm'])
 #client.giveTask('go',['1234','5678'])
