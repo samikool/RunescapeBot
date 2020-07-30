@@ -7,3 +7,6 @@ raw_videos/
 *.zip
 weights/
 output/
+named_images/
+images/
+labels/
