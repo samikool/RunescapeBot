@@ -1,4 +1,5 @@
 #Train
+#Don't forget to edit the network if you are training for more clasess last edit: filters=27 classes=4 -> filters=30 classes=5
 python3 train.py --epochs 1000 --batch-size 1 --cfg cfg/yolov3-spp.cfg --data data/custom/custom.data
 
 #Test 

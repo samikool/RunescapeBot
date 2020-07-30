@@ -333,15 +333,35 @@ class Controller:
 
     def dis(self, x1, y1, x2, y2):
         return sqrt((x2-x1)**2 + (y2-y1)**2)
-    
+
+    #TODO Probably going to start taking two screenshots for better detection
+    # Need to rework tree dataset first with only topdown photos    
     def getObjects(self):
         screenshot = pyautogui.screenshot()
+        
+        # s = screenshot.crop((0,0,640,720))
+        # s1 = screenshot.crop((640,0,1280,720))
 
         #screenshot.save('screenshot.png')
         img0 = cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
+        # s0 = cv2.cvtColor(np.array(s), cv2.COLOR_RGB2BGR)
+        # s10 = cv2.cvtColor(np.array(s1), cv2.COLOR_RGB2BGR)
+
         # Padded resize
-        img = self.letterbox(img0, new_shape=416)[0]
+        img = self.letterbox(img0, new_shape=640)[0]
+
+        # si0 = self.letterbox(s0, new_shape=640)[0]
+        # si1 = self.letterbox(s10, new_shape=640)[0]
+
+        # si0 = si0[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        # si0 = np.ascontiguousarray(si0)
+
+        # si1 = si1[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        # si1 = np.ascontiguousarray(si1)
+
+        # self.model.detect(si0, s0)
+        # self.model.detect(si1, s10)
 
         # Convert
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416

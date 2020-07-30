@@ -186,7 +186,7 @@ class BotClient:
             #[0] = object to farm
 
             #click on object to move there
-            self.lastClickX, self.lastClickY, obj = self.controller.clickObject(param[0], self.objects)
+            self.lastClickX, self.lastClickY, obj = self.controller.clickObject(param[0],self.objects)
 
             # #this sleep is to account for ping TODO: find a more consistant way to account for ping
             sleep(0.75)
@@ -213,7 +213,7 @@ class BotClient:
         elif action == 'click':
             #[0] = object to click 
             #Save last click location
-            self.lastClickX, self.lastClickY = self.controller.clickObject(param[1],self.objects)
+            self.lastClickX, self.lastClickY, obj = self.controller.clickObject(param[0],self.objects)
 
         elif action == 'open' or action == 'close' or action == 'select':
             #[0] icon to select to open/close/select - should be name of object being opened ie inventory,map,etc..
@@ -236,7 +236,7 @@ class BotClient:
                     self.executeAction('select '+param[0])
                     sleep(0.1)
 
-            self.executeAction('select closedeposit')
+            self.executeAction('select close_deposit')
 
         elif action == 'move':
             #will lock bot until it stops moving
@@ -261,7 +261,11 @@ class BotClient:
 #static funciton will create a botclient and start it
 def create(outQ, inQ, botnum, model, map_g, worldmap, tasks):
     client = BotClient(outQ, inQ, botnum, model, map_g, worldmap, tasks)
-    t = client.cleanTask('test_nn')
+    # t = client.cleanTask('goto', ['port_sarim_dropoff'])
+    # client.giveTask(t)
+    # client.startTask()
+
+    t = client.cleanTask('dropoff_object', ['logs', 'all'])
     client.giveTask(t)
     client.startTask()
 

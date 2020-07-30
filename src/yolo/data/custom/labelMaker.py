@@ -25,6 +25,7 @@ def parseJSONData(AllImageLabelData, classDict):
         im = Image.open(os.path.join(os.curdir, 'named_images/'+fileName))
         imW,imH = im.size
 
+
         labeled = True if imageData['Label'] else False
         if labeled:
             objects = imageData['Label']['objects'] #array of objects in image

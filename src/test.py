@@ -243,15 +243,24 @@ from multiprocessing import Process, Queue, current_process, freeze_support
 #         if x in rangeX and y in rangeY:
 #             im.putpixel((x,y), (0,0,255))
 
-# model = Rune_model()
-# model.load()
+# pyautogui.screenshot('close.png')
 
-# inq = queue.Queue
-# oq = queue.Queue
+model = Rune_model()
+model.load()
 
-# tasks = utils.parseTasks()
+#load master mapgraph
+map_g = MapGraph()
+map_g.load()
 
-# client = botclient.create(None, oq, inq, model, None, None, tasks)
+#load worldmap image
+worldmap = cv2.imread('worldmap.png')
+
+inq = queue.Queue
+oq = queue.Queue
+
+tasks = utils.parseTasks()
+
+client = botclient.create(oq, inq, 1, model, map_g, worldmap, tasks)
 
 
 # while True:
