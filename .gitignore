@@ -4,9 +4,11 @@ __init__.py
 raw_images/
 raw_videos/
 !*/raw_videos/convertToImages.py
+!*/named_images/renameimages.py
 *.zip
 weights/
 output/
 named_images/
 images/
 labels/
+test_images/
