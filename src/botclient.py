@@ -5,8 +5,6 @@ import subprocess
 import os
 import numpy as np
 
-from importlib import reload
-import importlib
 from controller import Controller
 from time import sleep
 
@@ -24,16 +22,12 @@ class BotClient:
         self.controller = Controller(botnum, model, map_g, worldmap)
     
         self.inTask = False
-        self.objects = {}
-        self.curTask={}
-
-        self.taskList = []
-
+        self.objects = dict()
+        self.curTask = dict()
 
         #start thread to watch queue for messages from master
         # self.qThread = threading.Thread(target=self.watchQ, name='q')
         # self.qThread.start()
-
 
     def watchQ(self):
         while True:
@@ -48,8 +42,6 @@ class BotClient:
                 self.taskThread = threading.Thread(target=self.startTask, name='task')
                 self.taskThread.start()
             elif(msg == 'taskLoop'):
-
-                self.taskList = []
                 name = True
 
                 while(True):
@@ -75,7 +67,7 @@ class BotClient:
     def sendMessage(self, message):
         self.outQ.put(message)
 
-    # TODO: this should probably be a util of tasks should be broken in an object
+    # TODO: this should probably be a util or tasks should be broken in an object
     def cleanTask(self, task_name, params:list=None):
         #key to replace #value to replace with
         def replaceInDict(d,key,value):
@@ -105,22 +97,16 @@ class BotClient:
                 replaceInDict(task,' ,',',')
         return task
 
-    #function will parse task and ready it to be started
-    #good for now might get weird with different arguments
+    #sets curTask to task passed in, this task should already be fully 'cleaned'
     def giveTask(self, task):
         self.curTask = task
 
     def startTask(self):
         self.inTask = True
         self.taskLoop()
+    
+    def startTaskLoop(self, loop):
         
-
-    def startTaskLoop(self):
-        self.inTask = True
-        while self.inTask:
-            for task in self.taskList:
-                self.giveTask(task)
-                self.taskLoop()
 
     def stopTask(self, t=None):
         if t:

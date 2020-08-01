@@ -28,7 +28,61 @@ def parseTasks():
                 curTask[key] = value
     return allTasks
 
- 
+def parseTaskLoops():
+    taskLoops = dict()
+    with open('taskLoops.cfg', 'r') as file: 
+        lines = file.readlines()
+        curTask = dict()
+        reading=False
+        for line in lines:
+            line = line.strip('\n')
+            if line.startswith('#'):
+                continue
+            if line == '':
+                continue
+
+            if line.startswith('['):
+                if reading:
+                    taskLoops[curTask['name']] = curTask
+                    curTask = dict()
+                reading = not reading
+                continue
+                
+            if reading:
+                key = line.split('=')[0]
+                value = line.split('=')[1]
+                curTask[key] = value
+    return taskLoops
+
+def cleanTask(task_name, params:list=None):
+    #key to replace #value to replace with
+    def replaceInDict(d,key,value):
+        for k in d:
+            d[k] = d[k].replace(key,value)
+            while d[k].endswith(' '):
+                d[k] = d[k][:-1]
+
+    task = parseTasks()[task_name]
+    if task.get('required'):
+        req = task.get('required').split(',')
+        opt = task.get('optional').split(',') if task.get('optional') else None
+
+        if len(req) > len(params):
+            raise AssertionError('There are required parameters not present')
+        for i,var in enumerate(req):
+            replaceInDict(task,var,params[i])
+        if opt:
+            numLeft = len(params) - len(req)
+            if(numLeft):
+                params = params[len(req):]
+                for i,var in enumerate(opt):
+                    replaceInDict(task,var,params[i])
+            else:
+                for i,var in enumerate(opt):
+                    replaceInDict(task,var,'')
+            replaceInDict(task,' ,',',')
+    return task
+
 def stopDisplay(d):
     subprocess.call([''])
 
@@ -112,3 +166,57 @@ def killBot(bot):
 
     cmd = 'kill '+pids
     subprocess.Popen(cmd,shell=True)
+
+taskLoops = parseTaskLoops()
+
+for loop in taskLoops.values():
+    l = list()
+    preloop = loop['preloop'].split(',')
+    for t in preloop:
+        t = t.split(' ')
+
+        n = t[0]
+        p = t[1:] if t[1:] else None
+
+        l.append(cleanTask(n,p))
+
+    loop['preloop'] = l
+
+    l = list()
+    mloop = loop['loop'].split(',')
+    for t in mloop:
+        t = t.split(' ')
+
+        n = t[0]
+        p = t[1:] if t[1:] else None
+
+        l.append(cleanTask(n,p)) 
+    
+    loop['loop'] = l
+
+    l = list()
+    poloop = loop['postloop'].split(',')
+    for t in poloop:
+        t = t.split(' ')
+
+        n = t[0]
+        p = t[1:] if t[1:] else None
+
+        l.append(cleanTask(n,p))
+    
+    loop['postloop'] = l
+
+# for k in taskLoops:
+#     print(k,'\n')
+#     loop = taskLoops[k]
+#     for t in loop['preloop']:
+#         print(t)
+#     print()
+
+#     for t in loop['loop']:
+#         print(t)
+#     print()
+
+#     for t in loop['postloop']:
+#         print(t)
+#     print()
