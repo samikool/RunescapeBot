@@ -1,3 +1,5 @@
+from GUI.runescapeApplication import *
+
 import os
 import cv2
 import graph
@@ -24,17 +26,16 @@ from graph import MapGraph
 from menu import Menu
 
 
-
 class MyManger(BaseManager):
     pass
 
 class Master:
     def __init__(self):
         #load master variables
-        self.menu = Menu(self)
+        # self.menu = Menu(self)
 
         #load shared data structures clients will use
-        mp.set_start_method('spawn')
+        mp.set_start_method('spawn', force = True)
 
         MyManger.register('model',Rune_model)
         MyManger.register('graph',graph.MapGraph)
@@ -168,7 +169,6 @@ class Master:
         del self.bots[i]
         del self.outputs[i]
 
-               
 #any options for actually starting bots goes here
 if __name__ == '__main__' :
     #parser = argparse.ArgumentParser()
@@ -178,23 +178,28 @@ if __name__ == '__main__' :
     # print("Starting:",opt.numbots)          
 
     # master = Master(numbots=opt.numbots)
-    # master.start()
-
     subprocess.call('clear')
     master = Master()
-    master.startBots(2,4)
+    print(master)
+    # master.start()
+    create(master)
+    
+    print('ending')
 
-    sleep(2)
+    while True:
+        sleep(10)
+    
+    # master.startBots(2,4)
 
-    menu = master.menu
+    # menu = master.menu
 
-    #for now just sleep not sure what to do here
-    while(True):
-        print()
-        print(menu.getMenu(), end='')
-        menu.getInput()
+    # #for now just sleep not sure what to do here
+    # while(True):
+    #     print()
+    #     print(menu.getMenu(), end='')
+    #     menu.getInput()
 
-    for bot in bots:
-        bot.join()
+    # for bot in bots:
+    #     bot.join()
 
-    manager.shutdown()
+    # manager.shutdown()

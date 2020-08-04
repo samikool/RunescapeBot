@@ -231,13 +231,13 @@ def getLoginDetails():
                 p = li[1]
                 u = li[2]
 
-                l = l[:-2]
-                l += '1\n'
-                lines[i] = l
+                # l = l[:-2]
+                # l += '1\n'
+                # lines[i] = l
                 break
 
-    with open('login.deets', 'w') as f:
-        f.writelines(lines)
+    # with open('login.deets', 'w') as f:
+    #     f.writelines(lines)
     
     v = None
     w = None
@@ -256,13 +256,13 @@ def getLoginDetails():
             if not v:
                 w = li[0]
                 
-                l = l[:-2]
-                l += '1\n'
-                lines[i] = l
+                # l = l[:-2]
+                # l += '1\n'
+                # lines[i] = l
                 break
 
-    with open('worlds.deets', 'w') as f:
-        f.writelines(lines)
+    # with open('worlds.deets', 'w') as f:
+    #     f.writelines(lines)
 
     return e,p,w
 

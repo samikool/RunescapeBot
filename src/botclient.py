@@ -12,7 +12,8 @@ from time import sleep
 from PIL import Image
 import mss
 import time
-
+# fuck you sam 
+# you little bitch
 #Will handle all the task logic
 class BotClient:
     def __init__(self, account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
@@ -139,11 +140,11 @@ class BotClient:
             
             #split time and make it int execute main loop for that amount of time
             c = loop['stop'].split(' ')[1]
-            c = int(C)
+            c = int(c)
             
             self.logger.log('executing loop...')
             for i in range(c):
-                self.logger.log('iter:',i)
+                self.logger.log('iter:'+str(i))
                 for t in loop['loop']:
                     self.giveTask(t)
                     self.startTask()
@@ -318,8 +319,8 @@ class BotClient:
 def create(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
     client = BotClient(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops)
     
-    sleep(60)
-    client.startTaskLoop(client.taskLoops['farm_oak_dropoff_port'])
+    sleep(15)
+    client.startTaskLoop(client.taskLoops['idle'])
 
     # t = client.cleanTask('goto', ['fal_top'])
     # t = client.cleanTask('farm_object',['oak_tree'])
@@ -328,7 +329,7 @@ def create(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops)
     # t = client.cleanTask('dropoff_object',['logs', 'all'])
     # t = client.cleanTask('farm_object',['common_tree'])
 
-    # t = client.cleanTask('test_nn')
+    # t = client.cleanTask('idle', ['3600'])
     # client.giveTask(t)
     # client.startTask()
 
