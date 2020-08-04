@@ -13,7 +13,7 @@ from kivy.uix.widget import Widget
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
-kv = Builder.load_file('/home/ben/RunescapeBot/src/GUI/runescape.kv')
+kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
 
 
 
@@ -245,9 +245,7 @@ class MyApp(App):
 def create(master):
     app = MyApp()
     app.setMaster(master)
-    print(app.getMaster())
     app.run()
-    print('here')
 
 
 # if __name__ == '__main__':
