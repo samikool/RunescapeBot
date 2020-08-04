@@ -13,7 +13,7 @@ dispPID=$!
 if ps | grep " $dispPID " 
 then
     export DISPLAY=$displayNum
-    startlxde >/dev/null 2>1&    
+    startlxde >/dev/null 2>&1 &
     deskPID=$!
     echo "dispPID=${dispPID}"
     echo "deskPID=${deskPID}"

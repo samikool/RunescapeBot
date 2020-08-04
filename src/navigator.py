@@ -13,13 +13,14 @@ from graph import MapGraph
 from graph import Vertex
 
 class Navigator:
-    def __init__(self, controller, mapGraph, worldmap, resHorz, resVert):
+    def __init__(self, controller, logger, mapGraph, worldmap, resHorz, resVert):
         self.controller = controller
         self.resHorz = resHorz
         self.resVert = resVert
         #load worldmap ahead of time
         self.worldmap = worldmap
         self.mapGraph = mapGraph
+        self.logger = logger
 
         #Region represents the bigMap #top,left,width,height
         self.bigmapRegion = (
@@ -50,7 +51,7 @@ class Navigator:
         
     def microNavigate(self,destX,destY):
         arrived = False
-        print('navigating to x:',destX,':y',destY)
+        self.logger.log('navigating to x: '+str(destX)+' y: '+str(destY))
         while not arrived:
             t0 = time.time()
             curX, curY = self.getLocation()
@@ -69,9 +70,9 @@ class Navigator:
             #convert angle to radians
 
             #x = clickableCompassRadius * cos(angle)
-            x = 135/2*math.cos(angle)
+            x = 133/2*math.cos(angle)
             #y = clickableCompassRadius * sin(angle) # y needs to be flipped
-            y = -(135/2*math.sin(angle))
+            y = -(133/2*math.sin(angle))
 
             #convert relative xy to global xy
             #compass will always be centered here
@@ -91,12 +92,12 @@ class Navigator:
 
             #debugging print
             #print('angle:',angle,'x:',x,'y:',y,'dist:',distance,'arrived',arrived,'time:',time.time()-t0,end='\r')
-            sleep(random.uniform(.25, 1))
+            sleep(random.uniform(.05, 0.25))
         
         while(self.controller.moving()):
             sleep(1)
         curX,curY = self.getLocation()
-        print('Arrived at x:',curX,'y:',curY)
+        self.logger.log('Arrived at x: '+str(curX)+' y: '+str(curY))
 
     def macroNavigate(self,destX=0,destY=0,place=None):
         if place != None:
@@ -113,7 +114,8 @@ class Navigator:
         path = self.mapGraph.findPath(startV,endV)
         for v in path:
             self.microNavigate(v.data[0],v.data[1])
-        self.microNavigate(destX, destY)
+        if place == None:
+            self.microNavigate(destX, destY)
 
 
     def compassContainsDest(self,curX,curY,destX,destY):

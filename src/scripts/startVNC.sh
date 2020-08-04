@@ -7,7 +7,7 @@ display=$1
 #-once -- only allow one connection opposite of -forever
 
 export DISPLAY=$display
-x11vnc -display $display -N -noipv6 -shared -nopw -quiet 2>&1 &
+x11vnc -display $display -N -noipv6 -shared -nopw -quiet -forever 2>&1 &
 vncPID=$!
 #sleep 1
 

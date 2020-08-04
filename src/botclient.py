@@ -5,6 +5,7 @@ import subprocess
 import os
 import numpy as np
 
+from logger import Logger
 from controller import Controller
 from time import sleep
 
@@ -14,25 +15,29 @@ import time
 
 #Will handle all the task logic
 class BotClient:
-    def __init__(self, outQ, inQ, botnum, model, map_g, worldmap, tasks):
+    def __init__(self, account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
         self.outQ = outQ
         self.inQ = inQ
         self.botnum = botnum
         self.allTasks = tasks
-        self.controller = Controller(botnum, model, map_g, worldmap)
-    
+        self.taskLoops = taskLoops
+        self.logger = Logger(botnum)
+        self.controller = Controller(botnum, self.logger, model, map_g, worldmap)
+        self.account = account
+
         self.inTask = False
         self.objects = dict()
         self.curTask = dict()
 
         #start thread to watch queue for messages from master
-        # self.qThread = threading.Thread(target=self.watchQ, name='q')
-        # self.qThread.start()
+        if botnum != 1:
+            self.qThread = threading.Thread(target=self.watchQ, name='q')
+            self.qThread.start()
 
     def watchQ(self):
         while True:
             msg = self.inQ.get()
-            print(self.botnum,'got:',str(msg))
+            self.logger.log(str(self.botnum)+' got: '+str(msg))
             if(msg == 'task'):
                 taskName = self.inQ.get()
                 params = self.inQ.get()
@@ -42,22 +47,9 @@ class BotClient:
                 self.taskThread = threading.Thread(target=self.startTask, name='task')
                 self.taskThread.start()
             elif(msg == 'taskLoop'):
-                name = True
+                loop = self.inQ.get()
 
-                while(True):
-                    i = self.inQ.get()
-                    if i == 'end':
-                        t = self.inQ.get()
-                        threading.Thread(target=self.stopTask, args=[t], name='timer').start()
-                        break
-                    
-                    n = i
-                    p = self.inQ.get()
-
-                    t = self.cleanTask(n,p)
-                    self.taskList.append(t)
-
-                self.taskThread = threading.Thread(target=self.startTaskLoop, name='task')
+                self.taskThread = threading.Thread(target=self.startTaskLoop, args=[loop], name='task')
                 self.taskThread.start()
             #for now there is not a good way to stop a task
             elif(msg == 'stop'):
@@ -106,12 +98,69 @@ class BotClient:
         self.taskLoop()
     
     def startTaskLoop(self, loop):
-        
+        #mean main loop stops on time limit
+        if loop['stop'].startswith('time'):
+
+            for t in loop['preloop']:
+                self.logger.log('executing preloop...')
+                self.giveTask(t)
+                self.startTask()
+            self.logger.log('done.')
+            
+            #split time and make it int execute main loop for that amount of time
+            
+            self.logger.log('executing loop...')
+            t0 = time.time()
+            tf = float(loop['stop'].split(' ')[1])*60
+
+            i=0
+            while time.time()-t0 < tf:
+                self.logger.log('iter:'+str(i))
+                for t in loop['loop']:
+                    self.giveTask(t)
+                    self.startTask()
+                i += 1
+            self.logger.log('done.')
+
+            self.logger.log('executing postloop')
+            for t in loop['postloop']:
+                self.giveTask(t)
+                self.startTask()
+            self.logger.log('done.')
+            self.logger.log('task finished.')
+
+        elif loop['stop'].startswith('count'):
+
+            for t in loop['preloop']:
+                self.logger.log('executing preloop...')
+                self.giveTask(t)
+                self.startTask()
+            self.logger.log('done.')
+            
+            #split time and make it int execute main loop for that amount of time
+            c = loop['stop'].split(' ')[1]
+            c = int(C)
+            
+            self.logger.log('executing loop...')
+            for i in range(c):
+                self.logger.log('iter:',i)
+                for t in loop['loop']:
+                    self.giveTask(t)
+                    self.startTask()
+                i += 1
+            self.logger.log('done.')
+
+            self.logger.log('executing postloop')
+            for t in loop['postloop']:
+                self.giveTask(t)
+                self.startTask()
+            self.logger.log('done.')
+            self.logger.log('task finished.')
 
     def stopTask(self, t=None):
         if t:
             sleep(t)
-        print('stop task')
+        self.logger.log('stop task')
         self.inTask = False
 
     def taskLoop(self):
@@ -122,11 +171,11 @@ class BotClient:
             self.curTask['postloop'] = self.curTask['postloop'].split(',') if self.curTask.get('postloop') else None 
 
         if(self.curTask['preloop']):
-            print('executing preloop...')
+            self.logger.log('executing preloop...')
             for action in self.curTask['preloop']:
                 self.executeAction(action)
-            print('done.')
-        print('executing loop...')
+            self.logger.log('done.')
+        self.logger.log('executing loop...')
         if self.curTask['stop'].startswith('count'):
             c = int(self.curTask['stop'].split(' ')[1])
             for i in range(c):
@@ -143,14 +192,14 @@ class BotClient:
                 for action in self.curTask['loop']:
                     self.executeAction(action)
 
-        print('done.')
+        self.logger.log('done.')
         if(self.curTask['postloop']):
-            print('executing postloop')
+            self.logger.log('executing postloop')
             for action in self.curTask['postloop']:
                 self.executeAction(action)   
-            print('done.') 
+            self.logger.log('done.') 
         
-        print('task finished.')
+        self.logger.log('task finished.')
          
     #will call appropiate functions in controller/python libs to execute action
     def executeAction(self, action):
@@ -159,10 +208,11 @@ class BotClient:
         action = actionList[0]
         param = actionList[1:] if len(actionList) > 1 else None
         
-        print('Action:', action,'Params:',param)
+        self.logger.log('Action: '+str(action)+' Params: '+str(param))
 
         if action == 'see':
             self.objects = self.controller.getObjects()
+            self.logger.log(str(len(self.objects))+' objects detected...')
         
         elif action == 'wait':
             #[0] = time
@@ -175,17 +225,17 @@ class BotClient:
             self.lastClickX, self.lastClickY, obj = self.controller.clickObject(param[0],self.objects)
 
             # #this sleep is to account for ping TODO: find a more consistant way to account for ping
-            sleep(0.75)
+            sleep(1)
             
             #lock bot until it stops moving
             self.executeAction('move')
 
-            sleep(0.5)
+            sleep(0.75)
 
             while(self.controller.farming()):
-                print('farming...',end='\r')
+                self.logger.log('farming...\r')
                 sleep(1)
-            print('object farmed.')
+            self.logger.log('object farmed.')
 
         elif action == 'navigate':
             #[0] place to go to if [1] is None else rawX
@@ -213,10 +263,12 @@ class BotClient:
             c = param[1]
             if c == 'all':
                 self.executeAction('select all .95')
-                sleep(0.1)
-                self.executeAction('select '+param[0])
-                sleep(0.2)
-                
+                sleep(0.25)
+                # self.executeAction('select '+param[0])
+                # sleep(0.2)
+                while self.controller.findIcon(param[0]) != None:
+                    self.executeAction('select '+param[0])
+                    sleep(0.25)
             else:
                 for i in range(int(c)):
                     self.executeAction('select '+param[0])
@@ -243,17 +295,42 @@ class BotClient:
                 self.controller.pressMultiple(keys)
             else:
                 self.controller.press(param[0])
+        #login is a special action that is defined in code instead of as a task 
+        elif action == 'login':
+            self.executeAction('select world 0.5')
+            self.executeAction('wait 0.25')
+            self.executeAction('select '+self.account[2]+' .96')
+            self.executeAction('select existinguser')
+            self.executeAction('wait 0.25')
+            self.executeAction('press shift+tab')
+            self.executeAction('hold backspace 5')
+            self.executeAction('type '+self.account[0])
+            self.executeAction('press tab')
+            self.executeAction('type '+self.account[1])
+            self.executeAction('wait 0.25')
+            self.executeAction('press enter')
+            self.executeAction('wait 15')
+            self.executeAction('select clicktoplay')
+            self.executeAction('wait 3')
+            self.executeAction('hold up 5')
 
 #static funciton will create a botclient and start it
-def create(outQ, inQ, botnum, model, map_g, worldmap, tasks):
-    client = BotClient(outQ, inQ, botnum, model, map_g, worldmap, tasks)
-    # t = client.cleanTask('goto', ['port_sarim_dropoff'])
+def create(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
+    client = BotClient(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops)
+    
+    sleep(60)
+    client.startTaskLoop(client.taskLoops['farm_oak_dropoff_port'])
+
+    # t = client.cleanTask('goto', ['fal_top'])
+    # t = client.cleanTask('farm_object',['oak_tree'])
+    # t = client.cleanTask('goto',['port_sarim_dropoff'])
+    # t = client.cleanTask('goto',['fal_south_tree_junction'])
+    # t = client.cleanTask('dropoff_object',['logs', 'all'])
+    # t = client.cleanTask('farm_object',['common_tree'])
+
+    # t = client.cleanTask('test_nn')
     # client.giveTask(t)
     # client.startTask()
-
-    t = client.cleanTask('dropoff_object', ['logs', 'all'])
-    client.giveTask(t)
-    client.startTask()
 
     while(True):
         sleep(3600)

@@ -12,7 +12,7 @@ class Rune_model(object):
                 source='yolo/data/custom/test_images', 
                 output='yolo/output', 
                 img_size=512, 
-                conf_thres=0.3, 
+                conf_thres=0.30, 
                 iou_thres=0.5, 
                 fourcc='mp4v', 
                 half=False, device='', 
@@ -141,8 +141,11 @@ class Rune_model(object):
                         plot_one_box(xyxy, im0, label=label, color=self.stuff['colors'][int(cls)])
                 
                 #print(objects)
+                # print(len(objects),' detections')
                 cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0)
-
+            else:
+                # print('no detections')
+                cv2.imwrite('output/screenshot'+str(self.imageCount)+'.png', im0) 
             # Print time (inference + NMS)
             #print('%sDone. (%.3fs)' % (s, t2 - t1))
 
@@ -152,5 +155,5 @@ class Rune_model(object):
         #print('Done. (%.3fs)' % (time.time() - t0))
         self.imageCount += 1
         
-        print(len(objects),'objects detected')
+        #print(len(objects),'objects detected')
         return objects

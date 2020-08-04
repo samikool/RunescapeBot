@@ -25,10 +25,11 @@ class Controller:
     resW = 1280
     modelLoaded = False
     
-    def __init__(self, display, model, map_g, worldmap):
+    def __init__(self, display, logger, model, map_g, worldmap):
         Controller.model = model
         self.display=display
-        self.navigator = Navigator(self, map_g, worldmap, self.resW, self.resH)
+        self.navigator = Navigator(self, logger, map_g, worldmap, self.resW, self.resH)
+        self.logger = logger
 
     def mouseLoop(self, num):
         while(True):
@@ -83,6 +84,10 @@ class Controller:
         
         icon = pyautogui.locateOnScreen(path,confidence=confidence)
         box = self.convertIconToBox(icon) if icon else None
+
+        if box == None:
+            self.logger.log('Couldn\'t find icon: '+ str(im_name))
+
         return box
 
     def clickIcon(self, ic_name, confidence=.80):
@@ -349,7 +354,7 @@ class Controller:
         # s10 = cv2.cvtColor(np.array(s1), cv2.COLOR_RGB2BGR)
 
         # Padded resize
-        img = self.letterbox(img0, new_shape=640)[0]
+        img = self.letterbox(img0, new_shape=736)[0]
 
         # si0 = self.letterbox(s0, new_shape=640)[0]
         # si1 = self.letterbox(s10, new_shape=640)[0]

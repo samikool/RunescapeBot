@@ -68,11 +68,24 @@ class Menu():
         #02 is list tasks
         i=1
         for t in self.master.tasks:
-            print(str(i)+'. ' + str(t))
+            print(str(i)+'. '+str(t))
             i+=1
 
+    def listTaskLoops(self):
+        i=1
+        for t in self.master.taskLoops:
+            print(str(i)+'. '+str(t))
+
     def startBot(self):
-        pass
+        while(True):
+            self.listBots()
+            i = input('Enter nothing to go back\nSelect Bot# to start:')
+            if i == '':
+                break
+            i = int(i)
+            if i not in self.master.bots:
+                self.master.startBot(i)
+                print('bot',i,'started\n')
 
     def killBot(self):
         while(True):
@@ -121,29 +134,15 @@ class Menu():
                     self.master.giveTask(bot, name, params)
                     
                 elif(i==2):
-                    taskList = []
-                    while(True):
-                        self.listTasks()
-                        print('Current List:'+str(taskList[0::2]))
-                        i = input('Enter nothing to go stop adding tasks\nSelect a task:')
-                        if i == '':
-                            break
-                        i = int(i)
+                    self.listTaskLoops()
+                    i = input('Enter nothing to go stop adding tasks\nSelect a taskLoop:')
+                    if i == '':
+                        break
+                    i = int(i)
 
-                        task = self.master.getTask(i-1)
-                        name = task['name']
-                        params = self.getTaskParams(task)
-
-                        taskList.append(name)
-                        taskList.append(params)
+                    loop = self.master.getTaskLoop(i-1)
+                    self.master.giveTaskLoop(bot,loop)
                         
-                    i = input('how long do you want to run this loop(seconds):')
-                    taskList.append('end')
-                    taskList.append(int(i))
-
-                    self.master.giveTaskLoop(bot,taskList)
-                        
-
     def getTaskParams(self, task):
         if(task.get('required')):
             params = task.get('paramInfo')

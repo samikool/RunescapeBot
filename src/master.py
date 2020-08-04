@@ -56,6 +56,9 @@ class Master:
  
         #load tasks from cfg file
         self.tasks = utils.parseTasks()
+
+        #Load task loops from cfg file
+        self.taskLoops = utils.parseTaskLoops()
         
         #create communication data structs
         self.inQ = mp.Queue()
@@ -100,15 +103,17 @@ class Master:
 
         print('vnc:', port, vncPID)
    
+        account = utils.getLoginDetails()
+
+        #setup output to bot
+        self.outputs[i] = mp.Queue()
 
         os.environ['DISPLAY']= ':'+str(i)
-        self.outputs[i] = mp.Queue()
         process = Process(
                     target=botclient.create, 
-                    args=[self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap, self.tasks],
+                    args=[account, self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap, self.tasks, self.taskLoops],
                 )
 
-        
         #store needed info about bot
         self.bots[i]['process'] = process
         self.bots[i]['dispPID'] = dispPID
@@ -116,6 +121,9 @@ class Master:
         self.bots[i]['clientPID'] = clientPID
         self.bots[i]['vncPID'] = vncPID
         self.bots[i]['dispNum'] = i
+        self.bots[i]['email'] = account[0]
+        self.bots[i]['password'] = account[1]
+        self.bots[i]['world'] = account[2]
 
         process.start()
 
@@ -131,10 +139,9 @@ class Master:
         self.outputs[i].put(taskName)
         self.outputs[i].put(taskParams)
 
-    def giveTaskLoop(self, i, taskList, stopCond='count 1'):
+    def giveTaskLoop(self, i, loop,):
         self.outputs[i].put('taskLoop')
-        for msg in taskList:
-            self.outputs[i].put(msg)
+        self.outputs[i].put(loop)
 
     def getTask(self,i,name=None):
         if(name):
@@ -142,6 +149,12 @@ class Master:
         else:
             return list(self.tasks.values())[i]
 
+    def getTaskLoop(self,i,name=None):
+        if(name):
+            return self.tasks[name]
+        else:
+            return list(self.tasks.values())[i]
+    
     #function will start multiple bots starting at s display and ending at num-1 display
     def startBots(self,s,num):
         if(s == 1):
@@ -169,7 +182,7 @@ if __name__ == '__main__' :
 
     subprocess.call('clear')
     master = Master()
-    master.startBots(2,1)
+    master.startBots(2,4)
 
     sleep(2)
 

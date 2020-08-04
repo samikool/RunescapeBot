@@ -246,6 +246,7 @@ from multiprocessing import Process, Queue, current_process, freeze_support
 # pyautogui.screenshot('close.png')
 
 model = Rune_model()
+
 model.load()
 
 #load master mapgraph
@@ -260,8 +261,14 @@ oq = queue.Queue
 
 tasks = utils.parseTasks()
 
-client = botclient.create(oq, inq, 1, model, map_g, worldmap, tasks)
+taskLoops = utils.parseTaskLoops()
 
+account = utils.getLoginDetails()
+
+client = botclient.create(account, oq, inq, 1, model, map_g, worldmap, tasks, taskLoops)
+# client = botclient.create(account, oq, inq, 2, model, map_g, worldmap, tasks, taskLoops)
+# client = botclient.create(account, oq, inq, 3, model, map_g, worldmap, tasks, taskLoops)
+# client = botclient.create(account, oq, inq, 4, model, map_g, worldmap, tasks, taskLoops)
 
 # while True:
 #     print(client.controller.inventoryFull(),end='\r')

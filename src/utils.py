@@ -52,6 +52,8 @@ def parseTaskLoops():
                 key = line.split('=')[0]
                 value = line.split('=')[1]
                 curTask[key] = value
+
+    prepTaskLoops(taskLoops)
     return taskLoops
 
 def cleanTask(task_name, params:list=None):
@@ -81,6 +83,7 @@ def cleanTask(task_name, params:list=None):
                 for i,var in enumerate(opt):
                     replaceInDict(task,var,'')
             replaceInDict(task,' ,',',')
+    
     return task
 
 def stopDisplay(d):
@@ -167,56 +170,100 @@ def killBot(bot):
     cmd = 'kill '+pids
     subprocess.Popen(cmd,shell=True)
 
-taskLoops = parseTaskLoops()
+def prepTaskLoops(taskLoops):
+    for loop in taskLoops.values():
+        l = list()
+        preloop = loop['preloop'].split(',')
+        for t in preloop:
+            t = t.split(' ')
 
-for loop in taskLoops.values():
-    l = list()
-    preloop = loop['preloop'].split(',')
-    for t in preloop:
-        t = t.split(' ')
+            n = t[0]
+            p = t[1:] if t[1:] else None
 
-        n = t[0]
-        p = t[1:] if t[1:] else None
+            l.append(cleanTask(n,p))
 
-        l.append(cleanTask(n,p))
+        loop['preloop'] = l
 
-    loop['preloop'] = l
+        l = list()
+        mloop = loop['loop'].split(',')
+        for t in mloop:
+            t = t.split(' ')
 
-    l = list()
-    mloop = loop['loop'].split(',')
-    for t in mloop:
-        t = t.split(' ')
+            n = t[0]
+            p = t[1:] if t[1:] else None
 
-        n = t[0]
-        p = t[1:] if t[1:] else None
+            l.append(cleanTask(n,p)) 
+        
+        loop['loop'] = l
 
-        l.append(cleanTask(n,p)) 
+        l = list()
+        poloop = loop['postloop'].split(',')
+        for t in poloop:
+            t = t.split(' ')
+
+            n = t[0]
+            p = t[1:] if t[1:] else None
+
+            l.append(cleanTask(n,p))
+        
+        loop['postloop'] = l
+
+def getLoginDetails():
+    lines = None
+    e = None
+    p = None
+    u = None
+    v = None
+
+    with open('login.deets', 'r') as f:
+        lines = f.readlines()
+        
+        for i,l in enumerate(lines):
+            if l.startswith('#'):
+                continue
+            li = l.strip('\n')
+            li = l.split(' ')
+
+            v = int(li[3])
+
+            if not v:
+                e = li[0]
+                p = li[1]
+                u = li[2]
+
+                l = l[:-2]
+                l += '1\n'
+                lines[i] = l
+                break
+
+    with open('login.deets', 'w') as f:
+        f.writelines(lines)
     
-    loop['loop'] = l
-
-    l = list()
-    poloop = loop['postloop'].split(',')
-    for t in poloop:
-        t = t.split(' ')
-
-        n = t[0]
-        p = t[1:] if t[1:] else None
-
-        l.append(cleanTask(n,p))
+    v = None
+    w = None
     
-    loop['postloop'] = l
+    with open('worlds.deets', 'r') as f:
+        lines = f.readlines()
 
-# for k in taskLoops:
-#     print(k,'\n')
-#     loop = taskLoops[k]
-#     for t in loop['preloop']:
-#         print(t)
-#     print()
+        for i,l in enumerate(lines):
+            if l.startswith('#'):
+                continue
+            li = l.strip('\n')
+            li = l.split(' ')
 
-#     for t in loop['loop']:
-#         print(t)
-#     print()
+            v = int(li[1])
 
-#     for t in loop['postloop']:
-#         print(t)
-#     print()
+            if not v:
+                w = li[0]
+                
+                l = l[:-2]
+                l += '1\n'
+                lines[i] = l
+                break
+
+    with open('worlds.deets', 'w') as f:
+        f.writelines(lines)
+
+    return e,p,w
+
+# print(getLoginDetails())            
