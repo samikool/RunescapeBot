@@ -194,7 +194,4 @@ if __name__ == '__main__' :
         print(menu.getMenu(), end='')
         menu.getInput()
 
-    for bot in bots:
-        bot.join()
-
     manager.shutdown()
