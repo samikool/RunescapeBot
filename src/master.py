@@ -1,5 +1,3 @@
-from GUI.runescapeApplication import *
-
 import os
 import cv2
 import graph
@@ -13,27 +11,20 @@ import queue
 from time import sleep
 
 import botclient
-import subprocess
 import multiprocessing as mp
-import numpy as np
 
 from multiprocessing import Process
 from multiprocessing.managers import BaseManager
-
 from time import sleep
+
 from yolo.runemodel import Rune_model
 from graph import MapGraph
-from menu import Menu
-
 
 class MyManger(BaseManager):
     pass
 
 class Master:
     def __init__(self):
-        #load master variables
-        # self.menu = Menu(self)
-
         #load shared data structures clients will use
         mp.set_start_method('spawn', force = True)
 
