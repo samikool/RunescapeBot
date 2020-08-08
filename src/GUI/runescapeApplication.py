@@ -1,5 +1,4 @@
 import kivy
-from champions import champs
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
@@ -8,13 +7,16 @@ from kivy.uix.label import Label
 from kivy.config import Config
 from kivy.lang import Builder
 from kivy.app import App
-from kivy.core.window import Window
 from kivy.graphics import *
+from kivy.properties import ObjectProperty
+from kivy.uix.widget import Widget
 
-Window.clearcolor = (0, 0, 0, 0) # this will change the windows color
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
-kv = Builder.load_file('C:/Users/benhi/Documents/Github/runescape/runescape.kv')
+kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
+
+
+
 
 class MainWindow(Screen):
     def __init__(self, **kwargs):
@@ -23,6 +25,7 @@ class MainWindow(Screen):
         self.currentLabels = []
         self.getBots()
         self.botBoolean = True
+
 
     def getBots(self):
 
@@ -69,6 +72,12 @@ class MainWindow(Screen):
     #This will be where we launch the bot to go do its tasks it was given
     def startBot(self):
         self.inputDisplay = self.ids.inputDisplay.text
+
+        app = App.get_running_app()
+        app.master.startBot(int(self.inputDisplay))
+
+        # self.app.master.startBot(int(self.inputDisplay))
+
         print("started bot on input display #" + str(self.inputDisplay))
         if self.botBoolean == True:
             self.ids.success.visible = True
@@ -199,14 +208,7 @@ class FourthWindow(Screen):
 
     def cancelButton(self):
         getSecondWindow()
-
-#this names the different screens so you can switch between them 
-sm = ScreenManager()
-sm.add_widget(MainWindow(name = 'main'))
-sm.add_widget(SecondWindow(name='second'))
-sm.add_widget(ThirdWindow(name='third'))
-sm.add_widget(FourthWindow(name = 'fourth'))
-
+    
 
 def getMainWindow():
     sm.current = 'main'
@@ -222,8 +224,29 @@ def getFourthWindow():
 
 class MyApp(App):
     def build(self):
+        #this names the different screens so you can switch between them 
+        sm = ScreenManager()
+        sm.add_widget(MainWindow(name = 'main'))
+        sm.add_widget(SecondWindow(name='second'))
+        sm.add_widget(ThirdWindow(name='third'))
+        sm.add_widget(FourthWindow(name = 'fourth'))
+
         self.title = 'RunescapeBot'
+        
+
         return sm
 
-if __name__ == '__main__':
-    MyApp().run()
+    def setMaster(self, master):
+        self.master = master
+
+    def getMaster(self):
+        return self.master
+
+def create(master):
+    app = MyApp()
+    app.setMaster(master)
+    app.run()
+
+
+# if __name__ == '__main__':
+#     MyApp().run()

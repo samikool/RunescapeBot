@@ -4,37 +4,27 @@ import graph
 import ctypes
 import utils
 
-import argparse
-import threading
-import botutils 
 import queue
 from time import sleep
 
+import threading
 import botclient
-import subprocess
 import multiprocessing as mp
-import numpy as np
 
 from multiprocessing import Process
 from multiprocessing.managers import BaseManager
-
 from time import sleep
+
 from yolo.runemodel import Rune_model
 from graph import MapGraph
-from menu import Menu
-
-
 
 class MyManger(BaseManager):
     pass
 
 class Master:
     def __init__(self):
-        #load master variables
-        self.menu = Menu(self)
-
         #load shared data structures clients will use
-        mp.set_start_method('spawn')
+        mp.set_start_method('spawn', force = True)
 
         MyManger.register('model',Rune_model)
         MyManger.register('graph',graph.MapGraph)
@@ -167,31 +157,3 @@ class Master:
         utils.killBot(self.bots[i])
         del self.bots[i]
         del self.outputs[i]
-
-               
-#any options for actually starting bots goes here
-if __name__ == '__main__' :
-    #parser = argparse.ArgumentParser()
-    #parser.add_argument('--numbots', type=int, required=True, help='specifies the number of bots to be started')
-    #opt = parser.parse_args()
-
-    # print("Starting:",opt.numbots)          
-
-    # master = Master(numbots=opt.numbots)
-    # master.start()
-
-    subprocess.call('clear')
-    master = Master()
-    master.startBots(2,4)
-
-    sleep(2)
-
-    menu = master.menu
-
-    #for now just sleep not sure what to do here
-    while(True):
-        print()
-        print(menu.getMenu(), end='')
-        menu.getInput()
-
-    manager.shutdown()
