@@ -15,9 +15,6 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
 
-
-
-
 class MainWindow(Screen):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)

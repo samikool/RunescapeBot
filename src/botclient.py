@@ -12,8 +12,7 @@ from time import sleep
 from PIL import Image
 import mss
 import time
-# fuck you sam 
-# you little bitch
+
 #Will handle all the task logic
 class BotClient:
     def __init__(self, account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
