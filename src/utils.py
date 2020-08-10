@@ -71,24 +71,101 @@ def cleanTask(task_name, params:list=None):
 
         if len(req) > len(params):
             raise AssertionError('There are required parameters not present')
+
         for i,var in enumerate(req):
             replaceInDict(task,var,params[i])
+
         if opt:
             numLeft = len(params) - len(req)
             if(numLeft):
                 params = params[len(req):]
                 for i,var in enumerate(opt):
                     replaceInDict(task,var,params[i])
+
             else:
                 for i,var in enumerate(opt):
                     replaceInDict(task,var,'')
+
             replaceInDict(task,' ,',',')
     
     return task
 
-def stopDisplay(d):
-    subprocess.call([''])
+def loadFile(file):
+    with open(file,'r') as f:
+        return [x.strip('\n') for x in f.readlines() if not x == '\n']
 
+def getTaskLoop(loop_name):
+    lines = loadFile('taskLoops.cfg')
+    l = findTask(loop_name, lines)
+    return prepTaskLoopp(l)
+
+def prepTaskLoopp(loop):
+    def makeList(k,loop):
+        t_list = list()
+        for t in loop[k].split(','):
+            l = t.split(' ')
+            n = l[0] #name
+            p = l[1:] #params
+
+            t_list.append(getTask(n,p))
+        loop[k] = t_list
+
+    makeList('preloop',loop)
+    makeList('loop',loop)
+    makeList('postloop',loop)
+    return loop
+
+def getTask(task_name, params:list=[]):
+    lines = loadFile('tasks.cfg')    
+    t = findTask(task_name, lines)
+    return prepTask(t, params)
+
+def findTask(task_name, lines:list):
+    reading = False
+    task = dict()
+    for i,l in enumerate(lines):
+        if l.endswith(task_name):
+            reading = True
+        if reading:
+            if l.startswith('['):
+                break
+            k,v = l.split('=')
+            task[k] = v
+    return task
+
+def prepTask(t, params:list=[]):
+    req = t.get('required').split(',') if t.get('required') else []
+    opt = t.get('optional').split(',') if t.get('optional') else []
+
+    nreq = len(req) if req else 0
+    nopt = len(opt) if opt else 0
+    nparam = len(params)
+
+    if nparam < nreq:
+        raise ValueError('task has required parameters, but some were not provided')
+
+    if nparam > nreq+nopt:
+        raise ValueError('too many parameters provided for task')
+
+    if not req and not opt:
+        return t
+
+    req_p = params[:nreq]
+    opt_p = params[nreq:]+[' ']*((nreq+nopt)-nparam) if opt else []
+
+    s = str(t)
+
+    for k,v in zip(req,req_p):
+        s = s.replace(k,v)
+
+    for k,v in zip(opt,opt_p):
+        s = s.replace(k,v)
+
+    s = s.replace('  ','')
+    s = s.replace(' ,',',')
+
+    return eval(s)
+    
 def createDisplay(d):
     cmd = './scripts/createDisplay.sh :'+str(d)
     proc = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
@@ -266,4 +343,3 @@ def getLoginDetails():
 
     return e,p,w
 
-# print(getLoginDetails())            

@@ -3,6 +3,8 @@ import re
 import random
 import shutil
 
+from tqdm import tqdm
+
 def getImgDict(imgDir):
     l = os.listdir(imgDir)
     d = dict()
@@ -41,7 +43,7 @@ if __name__ == '__main__':
 
     tc = 0
     vc = 0
-    for f in d:
+    for f in tqdm(d):
         img = d[f]['img']
         lbl = d[f]['lbl']
 

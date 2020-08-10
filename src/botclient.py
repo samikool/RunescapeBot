@@ -15,12 +15,10 @@ import time
 
 #Will handle all the task logic
 class BotClient:
-    def __init__(self, account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
+    def __init__(self, account, outQ, inQ, botnum, model, map_g, worldmap):
         self.outQ = outQ
         self.inQ = inQ
         self.botnum = botnum
-        self.allTasks = tasks
-        self.taskLoops = taskLoops
         self.logger = Logger(botnum)
         self.controller = Controller(botnum, self.logger, model, map_g, worldmap)
         self.account = account
@@ -259,7 +257,6 @@ class BotClient:
         elif action =='dropoff':
             #[0] is the item to dropoff at deposit box
             #[1] is the count 
-            #TODO implement dropping off find item in inventory box only
             c = param[1]
             if c == 'all':
                 self.executeAction('select all .95')
@@ -315,8 +312,8 @@ class BotClient:
             self.executeAction('hold up 5')
 
 #static funciton will create a botclient and start it
-def create(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops):
-    client = BotClient(account, outQ, inQ, botnum, model, map_g, worldmap, tasks, taskLoops)
+def create(account, outQ, inQ, botnum, model, map_g, worldmap):
+    client = BotClient(account, outQ, inQ, botnum, model, map_g, worldmap)
     
     sleep(15)
     client.startTaskLoop(client.taskLoops['idle'])

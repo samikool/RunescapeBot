@@ -43,12 +43,6 @@ class Master:
 
         #load worldmap image
         self.worldmap = cv2.imread('worldmap.png')
- 
-        #load tasks from cfg file
-        self.tasks = utils.parseTasks()
-
-        #Load task loops from cfg file
-        self.taskLoops = utils.parseTaskLoops()
         
         #create communication data structs
         self.inQ = mp.Queue()
@@ -101,7 +95,7 @@ class Master:
         os.environ['DISPLAY']= ':'+str(i)
         process = Process(
                     target=botclient.create, 
-                    args=[account, self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap, self.tasks, self.taskLoops],
+                    args=[account, self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap]
                 )
 
         #store needed info about bot
