@@ -4,10 +4,12 @@ import queue
 import subprocess
 import os
 import numpy as np
+import utils
 
 from logger import Logger
 from controller import Controller
 from time import sleep
+from threading import local
 
 from PIL import Image
 import mss
@@ -19,185 +21,143 @@ class BotClient:
         self.outQ = outQ
         self.inQ = inQ
         self.botnum = botnum
-        self.logger = Logger(botnum)
-        self.controller = Controller(botnum, self.logger, model, map_g, worldmap)
+        self.logger = Logger(botnum,printMsg=True)
+        self.controller:Controller = Controller(botnum, self.logger, model, map_g, worldmap)
         self.account = account
 
-        self.inTask = False
+        #Action Variables
         self.objects = dict()
-        self.curTask = dict()
 
         #start thread to watch queue for messages from master
-        if botnum != 1:
-            self.qThread = threading.Thread(target=self.watchQ, name='q')
-            self.qThread.start()
+        self.qThread = threading.Thread(target=self.watchQ, name='q')
+        self.qThread.start()
 
     def watchQ(self):
         while True:
             msg = self.inQ.get()
             self.logger.log(str(self.botnum)+' got: '+str(msg))
             if(msg == 'task'):
-                taskName = self.inQ.get()
-                params = self.inQ.get()
-                task = self.cleanTask(taskName, params)
+                t = self.inQ.get()
+                self.startTaskThread(t)
 
-                self.giveTask(task)
-                self.taskThread = threading.Thread(target=self.startTask, name='task')
-                self.taskThread.start()
-            elif(msg == 'taskLoop'):
-                loop = self.inQ.get()
-
-                self.taskThread = threading.Thread(target=self.startTaskLoop, args=[loop], name='task')
-                self.taskThread.start()
+            elif(msg == 'group'):
+                g = self.inQ.get()
+                self.startTaskGroupThread(g)
+            
+            elif(msg == 'interrupt'):
+                pass
             #for now there is not a good way to stop a task
             elif(msg == 'stop'):
-                self.inTask = False
-                while self.taskThread.isAlive:
-                    sleep(1)
+                pass
+
     def sendMessage(self, message):
         self.outQ.put(message)
 
-    # TODO: this should probably be a util or tasks should be broken in an object
-    def cleanTask(self, task_name, params:list=None):
-        #key to replace #value to replace with
-        def replaceInDict(d,key,value):
-            for k in d:
-                d[k] = d[k].replace(key,value)
-                while d[k].endswith(' '):
-                    d[k] = d[k][:-1]
+    #This is much cleaner and easier to follow, also will allow interruption and stopping
+    #TODO: There still is probably a way to share all of this code though considering its almost identical
+    #Maybe a tasker object could facilitate that better
+    def startTaskThread(self, t:dict):
+        self.taskThread = threading.Thread(target=self.startTask, args=[t])
+        self.taskThread.start()
 
-        task = self.allTasks[task_name]
-        if task.get('required'):
-            req = task.get('required').split(',')
-            opt = task.get('optional').split(',') if task.get('optional') else None
+    def startTaskGroupThread(self, g:dict):
+        self.taskGroupThread = threading.Thread(target=self.startTaskGroup, args=[g])
+        self.taskGroupThread.start()
 
-            if len(req) > len(params):
-                raise AssertionError('There are required parameters not present')
-            for i,var in enumerate(req):
-                replaceInDict(task,var,params[i])
-            if opt:
-                numLeft = len(params) - len(req)
-                if(numLeft):
-                    params = params[len(req):]
-                    for i,var in enumerate(opt):
-                        replaceInDict(task,var,params[i])
-                else:
-                    for i,var in enumerate(opt):
-                        replaceInDict(task,var,'')
-                replaceInDict(task,' ,',',')
-        return task
-
-    #sets curTask to task passed in, this task should already be fully 'cleaned'
-    def giveTask(self, task):
-        self.curTask = task
-
-    def startTask(self):
-        self.inTask = True
-        self.taskLoop()
+    def startTask(self, t:dict):
+        d = local() #create data localized to thread
+        d.done = self.getStopFunction(t['stop'], d)
+        self.executeTask(t, d.done)
     
-    def startTaskLoop(self, loop):
-        #mean main loop stops on time limit
-        if loop['stop'].startswith('time'):
+    def startTaskGroup(self, g:dict):
+        d = local() #create data localized to thread
+        d.done = self.getStopFunction(g['stop'], d)
+        self.executeGroup(g, d.done)
 
-            for t in loop['preloop']:
-                self.logger.log('executing preloop...')
-                self.giveTask(t)
-                self.startTask()
-            self.logger.log('done.')
-            
-            #split time and make it int execute main loop for that amount of time
-            
-            self.logger.log('executing loop...')
-            t0 = time.time()
-            tf = float(loop['stop'].split(' ')[1])*60
-
-            i=0
-            while time.time()-t0 < tf:
-                self.logger.log('iter:'+str(i))
-                for t in loop['loop']:
-                    self.giveTask(t)
-                    self.startTask()
-                i += 1
-            self.logger.log('done.')
-
-            self.logger.log('executing postloop')
-            for t in loop['postloop']:
-                self.giveTask(t)
-                self.startTask()
-            self.logger.log('done.')
-            self.logger.log('task finished.')
-
-        elif loop['stop'].startswith('count'):
-
-            for t in loop['preloop']:
-                self.logger.log('executing preloop...')
-                self.giveTask(t)
-                self.startTask()
-            self.logger.log('done.')
-            
-            #split time and make it int execute main loop for that amount of time
-            c = loop['stop'].split(' ')[1]
-            c = int(c)
-            
-            self.logger.log('executing loop...')
-            for i in range(c):
-                self.logger.log('iter:'+str(i))
-                for t in loop['loop']:
-                    self.giveTask(t)
-                    self.startTask()
-                i += 1
-            self.logger.log('done.')
-
-            self.logger.log('executing postloop')
-            for t in loop['postloop']:
-                self.giveTask(t)
-                self.startTask()
-            self.logger.log('done.')
-            self.logger.log('task finished.')
-
-    def stopTask(self, t=None):
-        if t:
-            sleep(t)
-        self.logger.log('stop task')
-        self.inTask = False
-
-    def taskLoop(self):
-        #convert loop to list # need to do here to account for params
-        if type(self.curTask['loop']) != list:
-            self.curTask['preloop'] = self.curTask['preloop'].split(',') if self.curTask.get('preloop') else None 
-            self.curTask['loop'] = self.curTask['loop'].split(',')
-            self.curTask['postloop'] = self.curTask['postloop'].split(',') if self.curTask.get('postloop') else None 
-
-        if(self.curTask['preloop']):
-            self.logger.log('executing preloop...')
-            for action in self.curTask['preloop']:
-                self.executeAction(action)
-            self.logger.log('done.')
-        self.logger.log('executing loop...')
-        if self.curTask['stop'].startswith('count'):
-            c = int(self.curTask['stop'].split(' ')[1])
-            for i in range(c):
-                for action in self.curTask['loop']:
-                    self.executeAction(action)
-        
-        elif self.curTask['stop'] == 'full':
-            while not self.controller.inventoryFull():
-                for action in self.curTask['loop']:
-                    self.executeAction(action)
-
-        elif self.curTask['stop'] == 'never':
-            while self.inTask:
-                for action in self.curTask['loop']:
-                    self.executeAction(action)
-
+    #TODO: TEST
+    def executeGroup(self, g:dict, done):
+        self.logger.log('executing preloop...')
+        self.executeGroupLoop(g.get('preloop'))
         self.logger.log('done.')
-        if(self.curTask['postloop']):
-            self.logger.log('executing postloop')
-            for action in self.curTask['postloop']:
-                self.executeAction(action)   
-            self.logger.log('done.') 
+
+        while(not done()):
+            self.logger.log('executing loop...')
+            self.executeGroupLoop(g.get('loop'))
+            self.logger.log('done.')
         
-        self.logger.log('task finished.')
+        self.logger.log('executing post loop...')
+        self.executeGroupLoop(g.get('postloop'))
+        self.logger.log('done.')
+
+    def executeTask(self, t:dict, done):
+        self.logger.log('executing preloop...')
+        self.executeTaskLoop(t.get('preloop'))
+        self.logger.log('done.')
+
+        while(not done()):
+            self.logger.log('executing loop...')
+            self.executeTaskLoop(t.get('loop'))
+            self.logger.log('done.')
+        
+        self.logger.log('executing post loop...')
+        self.executeTaskLoop(t.get('postloop'))
+        self.logger.log('done.')
+
+    def executeTaskLoop(self, l:list):
+        if l is None: return
+        for a in l: self.executeAction(a)
+
+    def executeGroupLoop(self, l:list):
+        if l is None: return
+        for t in l: self.startTask(t)
+
+    def interruptTaskLoopThread(self):
+        pass
+
+    def getStopFunction(self, s:str, d):
+        def count(c:int=None):
+            if not c:
+                d.curC += 1
+                self.logger.log('count check...' + str(d.curC == d.tgtC))
+                return d.curC == d.tgtC
+            d.curC = 0
+            d.tgtC = c+1
+
+        def timer(x):
+            d.tt=0
+            while(d.tt < x):
+                t0=time.time()
+                sleep(1)
+                d.tt += time.time()-t0
+
+        def cus_time(x=None):
+            if not x: 
+                self.logger.log('time check...')
+                return not d.t.is_alive()
+
+            d.t = threading.Thread(target=timer, args=[x])
+            d.t.start()
+
+        s = s.split(' ')
+        if(s[0] == 'time'):
+            self.logger.log('time init...')
+            s[1] = int(s[1])
+            cus_time(s[1])
+            return cus_time
+
+        if(s[0] == 'count'):
+            self.logger.log('count init...')
+            s[1] = int(s[1])
+            count(s[1])
+            return count
+        
+        #this one looks weird but is only for debugging
+        if(s[0] == 'never'):
+            def rt(): return True
+            return rt
+
+        if(s[0] == 'full'):
+            return self.controller.inventoryFull
          
     #will call appropiate functions in controller/python libs to execute action
     def executeAction(self, action):
@@ -261,8 +221,7 @@ class BotClient:
             if c == 'all':
                 self.executeAction('select all .95')
                 sleep(0.25)
-                # self.executeAction('select '+param[0])
-                # sleep(0.2)
+
                 while self.controller.findIcon(param[0]) != None:
                     self.executeAction('select '+param[0])
                     sleep(0.25)
@@ -313,21 +272,14 @@ class BotClient:
 
 #static funciton will create a botclient and start it
 def create(account, outQ, inQ, botnum, model, map_g, worldmap):
-    client = BotClient(account, outQ, inQ, botnum, model, map_g, worldmap)
+    return BotClient(account, outQ, inQ, botnum, model, map_g, worldmap)
     
-    sleep(15)
-    client.startTaskLoop(client.taskLoops['idle'])
-
-    # t = client.cleanTask('goto', ['fal_top'])
-    # t = client.cleanTask('farm_object',['oak_tree'])
-    # t = client.cleanTask('goto',['port_sarim_dropoff'])
-    # t = client.cleanTask('goto',['fal_south_tree_junction'])
-    # t = client.cleanTask('dropoff_object',['logs', 'all'])
-    # t = client.cleanTask('farm_object',['common_tree'])
-
-    # t = client.cleanTask('idle', ['3600'])
-    # client.giveTask(t)
-    # client.startTask()
-
-    while(True):
-        sleep(3600)
+    # sleep(5)
+    
+    # # t = utils.getTask('login_custom',['sam','sam','world418'])
+    # t = utils.getTaskGroup('idle')
+    # client.startTaskGroupThread(t)
+    
+    
+    # while(True):
+    #     sleep(3600)
