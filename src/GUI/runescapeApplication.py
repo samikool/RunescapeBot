@@ -25,8 +25,8 @@ class MainWindow(Screen):
         super(MainWindow, self).__init__(**kwargs)
         app = App.get_running_app()
         #TODO change these to dicts
-        self.bots = []
-        self.currentLabels = []
+        self.bots = dict()
+        self.currentLabels = dict()
         self.botBoolean = True
 
     def getBots(self):
@@ -45,7 +45,7 @@ class MainWindow(Screen):
         self.x = .2
 
         for i in bots:
-            self.bots.append(i)
+            self.bots[i] = i
             label = "Bot "+str(i)
 
             if self.y > .4:
