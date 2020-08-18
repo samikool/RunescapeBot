@@ -11,6 +11,11 @@ from kivy.graphics import *
 from kivy.properties import ObjectProperty
 from kivy.uix.widget import Widget
 
+import sys
+sys.path.append('..')
+
+import utils
+
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
@@ -19,6 +24,7 @@ class MainWindow(Screen):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
         app = App.get_running_app()
+        #TODO change these to dicts
         self.bots = []
         self.currentLabels = []
         self.botBoolean = True
@@ -95,16 +101,25 @@ class SecondWindow(Screen):
         super(SecondWindow, self).__init__(**kwargs)
 
     #function to kill the bot
+    #TODO Implement killing bot
     def killBot(self):
+        global selectedBot
+
+        app = App.get_running_app()
+        app.master.killBot(int(selectedBot))
+        
         self.deadBot = Label(text = (selectedBot + " has been killed"), pos_hint = {'center_y': .4, 'center_x': .5}, size_hint = (.2, .2))
         self.add_widget(self.deadBot)
-        
+        s = app.sm.get_screen('main')
+
+        s.bots.remove(int(selectedBot))
+        s.remove_widget(selectedBot)       
 
 
 class ThirdWindow(Screen):
     def __init__(self, **kwargs):
         super(ThirdWindow, self).__init__(**kwargs)
-        self.taskList = ["Trees", "Fight", "Mining", "Travel", "Trade"]
+        self.taskList = utils.getAllTaskNames() + utils.getAllGroupNames()
         self.taskWidgets = []
         self.selectedTasks = []
         self.selectedTaskWidgets = []
@@ -183,7 +198,7 @@ class ThirdWindow(Screen):
             self.remove_widget(y)
 
         self.selectedTasks = []
-        self.taskList = ["Trees", "Fight", "Mining", "Travel", "Trade"]
+        self.taskList = []
         self.selectedTaskWidgets = []
         self.taskWidgets = []
         self.getTasks()

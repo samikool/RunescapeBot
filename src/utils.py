@@ -5,6 +5,14 @@ def loadFile(file):
     with open(file,'r') as f:
         return [x.strip('\n') for x in f.readlines() if not x == '\n']
 
+def getAllTaskNames():
+    lines = loadFile('tasks.cfg')
+    return [l.split('=')[1] for l in lines if l.startswith('name')]
+
+def getAllGroupNames():
+    lines = loadFile('taskGroups.cfg')
+    return [l.split('=')[1] for l in lines if l.startswith('name')]
+
 def getTaskGroup(group_name):
     lines = loadFile('taskGroups.cfg')
     l = findTask(group_name, lines)
