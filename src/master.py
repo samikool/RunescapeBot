@@ -43,12 +43,6 @@ class Master:
 
         #load worldmap image
         self.worldmap = cv2.imread('worldmap.png')
- 
-        #load tasks from cfg file
-        self.tasks = utils.parseTasks()
-
-        #Load task loops from cfg file
-        self.taskLoops = utils.parseTaskLoops()
         
         #create communication data structs
         self.inQ = mp.Queue()
@@ -101,7 +95,7 @@ class Master:
         os.environ['DISPLAY']= ':'+str(i)
         process = Process(
                     target=botclient.create, 
-                    args=[account, self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap, self.tasks, self.taskLoops],
+                    args=[account, self.inQ, self.outputs[i], i, self.model, self.map_g, self.worldmap]
                 )
 
         #store needed info about bot
@@ -121,30 +115,22 @@ class Master:
         self.bots[i]['processPID'] = process.pid
         print('process:', process.pid)
 
+    def interruptTask(self, i):
+        self.outputs[i].put('interrupt')
+
     def stopTask(self, i):
         self.outputs[i].put('stop')
 
-    def giveTask(self, i, taskName, taskParams=None):
+    def giveTask(self, i, taskName, taskParams=[]):
+        t = utils.getTask(taskName, taskParams)
         self.outputs[i].put('task')
-        self.outputs[i].put(taskName)
-        self.outputs[i].put(taskParams)
+        self.outputs[i].put(t)
 
-    def giveTaskLoop(self, i, loop,):
-        self.outputs[i].put('taskLoop')
-        self.outputs[i].put(loop)
+    def giveTaskGroup(self, i, groupName,):
+        g = utils.getTaskGroup(groupName)
+        self.outputs[i].put('group')
+        self.outputs[i].put(g)
 
-    def getTask(self,i,name=None):
-        if(name):
-            return self.tasks[name]
-        else:
-            return list(self.tasks.values())[i]
-
-    def getTaskLoop(self,i,name=None):
-        if(name):
-            return self.tasks[name]
-        else:
-            return list(self.tasks.values())[i]
-    
     #function will start multiple bots starting at s display and ending at num-1 display
     def startBots(self,s,num):
         if(s == 1):

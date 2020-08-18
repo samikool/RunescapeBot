@@ -1,93 +1,84 @@
 import subprocess
 from time import sleep
 
-#function will read tasks from cfg file
-def parseTasks():
-    allTasks = dict()
-    with open('tasks.cfg', 'r') as file: 
-        lines = file.readlines()
-        curTask = dict()
-        reading=False
-        for line in lines:
-            line = line.strip('\n')
-            if line.startswith('#'):
-                continue
-            if line == '':
-                continue
+def loadFile(file):
+    with open(file,'r') as f:
+        return [x.strip('\n') for x in f.readlines() if not x == '\n']
 
-            if line.startswith('['):
-                if reading:
-                    allTasks[curTask['name']] = curTask
-                    curTask = dict()
-                reading = not reading
-                continue
-                
-            if reading:
-                key = line.split('=')[0]
-                value = line.split('=')[1]
-                curTask[key] = value
-    return allTasks
+def getTaskGroup(group_name):
+    lines = loadFile('taskGroups.cfg')
+    l = findTask(group_name, lines)
+    return prepTaskGroup(l)
 
-def parseTaskLoops():
-    taskLoops = dict()
-    with open('taskLoops.cfg', 'r') as file: 
-        lines = file.readlines()
-        curTask = dict()
-        reading=False
-        for line in lines:
-            line = line.strip('\n')
-            if line.startswith('#'):
-                continue
-            if line == '':
-                continue
+def prepTaskGroup(group):
+    def dictStrToList(key):
+        t_list = list()
+        for t in group[key].split(','):
+            l = t.split(' ')
+            n = l[0] #name
+            p = l[1:] #params
 
-            if line.startswith('['):
-                if reading:
-                    taskLoops[curTask['name']] = curTask
-                    curTask = dict()
-                reading = not reading
-                continue
-                
-            if reading:
-                key = line.split('=')[0]
-                value = line.split('=')[1]
-                curTask[key] = value
+            t_list.append(getTask(n,p))
+        group[key] = t_list
 
-    prepTaskLoops(taskLoops)
-    return taskLoops
+    dictStrToList('preloop')
+    dictStrToList('loop')
+    dictStrToList('postloop')
+    return group
 
-def cleanTask(task_name, params:list=None):
-    #key to replace #value to replace with
-    def replaceInDict(d,key,value):
-        for k in d:
-            d[k] = d[k].replace(key,value)
-            while d[k].endswith(' '):
-                d[k] = d[k][:-1]
+def getTask(task_name, params:list=[]):
+    lines = loadFile('tasks.cfg')    
+    t = findTask(task_name, lines)
+    return prepTask(t, params)
 
-    task = parseTasks()[task_name]
-    if task.get('required'):
-        req = task.get('required').split(',')
-        opt = task.get('optional').split(',') if task.get('optional') else None
-
-        if len(req) > len(params):
-            raise AssertionError('There are required parameters not present')
-        for i,var in enumerate(req):
-            replaceInDict(task,var,params[i])
-        if opt:
-            numLeft = len(params) - len(req)
-            if(numLeft):
-                params = params[len(req):]
-                for i,var in enumerate(opt):
-                    replaceInDict(task,var,params[i])
-            else:
-                for i,var in enumerate(opt):
-                    replaceInDict(task,var,'')
-            replaceInDict(task,' ,',',')
-    
+def findTask(task_name, lines:list):
+    reading = False
+    task = dict()
+    for i,l in enumerate(lines):
+        if l.endswith(task_name):
+            reading = True
+        if reading:
+            if l.startswith('['):
+                break
+            k,v = l.split('=')
+            task[k] = v
     return task
 
-def stopDisplay(d):
-    subprocess.call([''])
+def prepTask(t, params:list=[]):
+    req = t.get('required').split(',') if t.get('required') else []
+    opt = t.get('optional').split(',') if t.get('optional') else []
+
+    nreq = len(req) if req else 0
+    nopt = len(opt) if opt else 0
+    nparam = len(params)
+
+    if nparam < nreq:
+        raise ValueError('task has required parameters, but some were not provided')
+
+    if nparam > nreq+nopt:
+        raise ValueError('too many parameters provided for task')
+
+    req_p = params[:nreq]
+    opt_p = params[nreq:]+[' ']*((nreq+nopt)-nparam) if opt else []
+
+    s = str(t)
+
+    for k,v in zip(req,req_p):
+        s = s.replace(k,v)
+
+    for k,v in zip(opt,opt_p):
+        s = s.replace(k,v)
+
+    s = s.replace('  ','')
+    s = s.replace(' ,',',')
+
+    s = eval(s)
+
+    if s.get('preloop'): s['preloop'] = s['preloop'].split(',')
+    if s.get('loop'): s['loop'] = s['loop'].split(',')
+    if s.get('postloop'): s['postloop'] = s['postloop'].split(',')
+
+    return s
 
 def createDisplay(d):
     cmd = './scripts/createDisplay.sh :'+str(d)
@@ -170,44 +161,6 @@ def killBot(bot):
     cmd = 'kill '+pids
     subprocess.Popen(cmd,shell=True)
 
-def prepTaskLoops(taskLoops):
-    for loop in taskLoops.values():
-        l = list()
-        preloop = loop['preloop'].split(',')
-        for t in preloop:
-            t = t.split(' ')
-
-            n = t[0]
-            p = t[1:] if t[1:] else None
-
-            l.append(cleanTask(n,p))
-
-        loop['preloop'] = l
-
-        l = list()
-        mloop = loop['loop'].split(',')
-        for t in mloop:
-            t = t.split(' ')
-
-            n = t[0]
-            p = t[1:] if t[1:] else None
-
-            l.append(cleanTask(n,p)) 
-        
-        loop['loop'] = l
-
-        l = list()
-        poloop = loop['postloop'].split(',')
-        for t in poloop:
-            t = t.split(' ')
-
-            n = t[0]
-            p = t[1:] if t[1:] else None
-
-            l.append(cleanTask(n,p))
-        
-        loop['postloop'] = l
-
 def getLoginDetails():
     lines = None
     e = None
@@ -265,5 +218,3 @@ def getLoginDetails():
     #     f.writelines(lines)
 
     return e,p,w
-
-# print(getLoginDetails())            

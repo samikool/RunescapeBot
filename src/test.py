@@ -246,7 +246,6 @@ from multiprocessing import Process, Queue, current_process, freeze_support
 # pyautogui.screenshot('close.png')
 
 model = Rune_model()
-
 model.load()
 
 #load master mapgraph
@@ -256,16 +255,26 @@ map_g.load()
 #load worldmap image
 worldmap = cv2.imread('worldmap.png')
 
-inq = queue.Queue
-oq = queue.Queue
-
-tasks = utils.parseTasks()
-
-taskLoops = utils.parseTaskLoops()
+inq = Queue()
+oq = Queue()
 
 account = utils.getLoginDetails()
 
-client = botclient.create(account, oq, inq, 1, model, map_g, worldmap, tasks, taskLoops)
+client = botclient.create(account, inq, oq, 1, model, map_g, worldmap)
+
+t = utils.getTask('test_nn')
+g = utils.getTaskGroup('idle')
+
+msg = input('Enter input: ')
+
+if(msg == 't'):
+    oq.put('task')
+    oq.put(t)
+elif(msg == 'g'):
+    oq.put('group')
+    oq.put(g)
+
+
 # client = botclient.create(account, oq, inq, 2, model, map_g, worldmap, tasks, taskLoops)
 # client = botclient.create(account, oq, inq, 3, model, map_g, worldmap, tasks, taskLoops)
 # client = botclient.create(account, oq, inq, 4, model, map_g, worldmap, tasks, taskLoops)
