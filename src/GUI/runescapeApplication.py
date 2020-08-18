@@ -18,16 +18,18 @@ kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
 class MainWindow(Screen):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
-        self.botArray = ["bot1", "bot2", "bot3", "bot4", "bot5", "bot6", "bot7", "bot8", "bot9", "bot10", "bot11", "bot12", "bot13"]
+        app = App.get_running_app()
+        self.bots = []
         self.currentLabels = []
-        self.getBots()
         self.botBoolean = True
 
-
     def getBots(self):
+        
+        app = App.get_running_app()
+        bots = app.master.bots
 
         def callback(instance):
-            if instance.id in self.botArray:
+            if int(instance.id) in self.bots:
                 global selectedBot
                 selectedBot = instance.id
                 print("you clicked on " + str(instance.id))
@@ -35,18 +37,22 @@ class MainWindow(Screen):
 
         self.y = .7
         self.x = .2
-        for i in self.botArray: 
+
+        for i in bots:
+            self.bots.append(i)
+            label = "Bot "+str(i)
+
             if self.y > .4:
-                    i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                    i.bind(on_press=callback)
-                    self.currentLabels.append(i)
-                    self.add_widget(i)
-                    self.y -= .1
+                i = Button(text = label, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
+                i.bind(on_press=callback)
+                self.currentLabels.append(i)
+                self.add_widget(i)
+                self.y -= .1
 
             elif self.y <= .4:
                 self.y = .7
                 self.x = self.x + .1
-                i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
+                i = Button(text = label, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
                 i.bind(on_press=callback)
                 self.currentLabels.append(i)
                 self.add_widget(i)
@@ -82,6 +88,7 @@ class MainWindow(Screen):
         if self.botBoolean == False:
             self.ids.failure.visible = True
             self.ids.success.visible = False
+        self.refreshList()
 
 class SecondWindow(Screen):
     def __init__(self, **kwargs):
@@ -89,7 +96,7 @@ class SecondWindow(Screen):
 
     #function to kill the bot
     def killBot(self):
-        self.deadBot = Label(text = (selectedBot + " has successfully been shot and raped"), pos_hint = {'center_y': .4, 'center_x': .5}, size_hint = (.2, .2))
+        self.deadBot = Label(text = (selectedBot + " has been killed"), pos_hint = {'center_y': .4, 'center_x': .5}, size_hint = (.2, .2))
         self.add_widget(self.deadBot)
         
 
@@ -205,33 +212,42 @@ class FourthWindow(Screen):
 
     def cancelButton(self):
         getSecondWindow()
-    
+
+ 
 
 def getMainWindow():
-    sm.current = 'main'
+    app = App.get_running_app()
+    print('here')
+    app.sm.current = 'main'
 
 def getSecondWindow():
-    sm.current = 'second'
+    app = App.get_running_app()
+    print('here1')
+    app.sm.current = 'second'
 
 def getThirdWindow():
-    sm.current = 'third'
+    app = App.get_running_app()
+    print('here2')
+    app.sm.current = 'third'
 
 def getFourthWindow():
-    sm.current = 'fourth'
+    app = App.get_running_app()
+    print('here3')
+    app.sm.current = 'fourth'
 
 class MyApp(App):
     def build(self):
-        #this names the different screens so you can switch between them 
-        sm = ScreenManager()
-        sm.add_widget(MainWindow(name = 'main'))
-        sm.add_widget(SecondWindow(name='second'))
-        sm.add_widget(ThirdWindow(name='third'))
-        sm.add_widget(FourthWindow(name = 'fourth'))
-
         self.title = 'RunescapeBot'
+
+        #this names the different screens so you can switch between them 
+        self.sm = ScreenManager()
+        self.sm.add_widget(MainWindow(name = 'main'))
+        self.sm.add_widget(SecondWindow(name='second'))
+        self.sm.add_widget(ThirdWindow(name='third'))
+        self.sm.add_widget(FourthWindow(name = 'fourth'))   
         
 
-        return sm
+        return self.sm
 
     def setMaster(self, master):
         self.master = master
