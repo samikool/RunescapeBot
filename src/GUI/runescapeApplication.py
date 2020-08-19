@@ -20,10 +20,32 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
 
+class BotListArea(Widget):
+    def __init__(self, **kwargs):
+        super(BotListArea, self).__init__(**kwargs)
+        self.app = App.get_running_app()
+        self.bots = self.app.master.bots
+        self.buttons = dict()
+        
+
+    def refreshBots(self):
+        
+        pass
+
+class StartBotArea(FloatLayout):
+    def __init__(self, **kwargs):
+        super(StartBotArea, self).__init__(**kwargs)
+        self.app = App.get_running_app()
+
+    def test(self):
+        print(kv)
+
+
+
 class MainWindow(Screen):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
-        app = App.get_running_app()
+        self.app = App.get_running_app()
         #TODO change these to dicts
         self.bots = []
         self.currentLabels = []
@@ -80,6 +102,7 @@ class MainWindow(Screen):
 
     #This will be where we launch the bot to go do its tasks it was given
     def startBot(self):
+        print(kv)
         self.inputDisplay = self.ids.inputDisplay.text
 
         app = App.get_running_app()
@@ -250,16 +273,20 @@ def getFourthWindow():
     print('here3')
     app.sm.current = 'fourth'
 
-class MyApp(App):
+class Controller(App):
     def build(self):
         self.title = 'RunescapeBot'
 
         #this names the different screens so you can switch between them 
         self.sm = ScreenManager()
         self.sm.add_widget(MainWindow(name = 'main'))
+
+
+
+
         self.sm.add_widget(SecondWindow(name='second'))
         self.sm.add_widget(ThirdWindow(name='third'))
-        self.sm.add_widget(FourthWindow(name = 'fourth'))   
+        self.sm.add_widget(FourthWindow(name = 'fourth'))
         
 
         return self.sm
@@ -270,11 +297,11 @@ class MyApp(App):
     def getMaster(self):
         return self.master
 
+    def startBot(self):
+        print(self.sm.screens[0].ids['start'].ids['botnumInput'].text)
+        # self.master.startBot(2)
+
 def create(master):
-    app = MyApp()
+    app = Controller()
     app.setMaster(master)
     app.run()
-
-
-# if __name__ == '__main__':
-#     MyApp().run()
