@@ -153,8 +153,8 @@ class BotClient:
         
         #this one looks weird but is only for debugging
         if(s[0] == 'never'):
-            def rt(): return True
-            return rt
+            def retTrue(): return True
+            return retTrue
 
         if(s[0] == 'full'):
             return self.controller.inventoryFull
