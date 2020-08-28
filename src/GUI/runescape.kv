@@ -12,77 +12,48 @@
             id: logo
             size_hint: (.3, .3)
             pos_hint: {'center_x': .5, 'center_y': .5}
+
         BotListArea:
             id: botlist
             size_hint: (.5, .5)
             pos_hint: {'center_x': .5, 'center_y': .5}
+
         StartBotArea:
             id: start
-            size_hint: (.2, .2)
+            size_hint: (.5, .2)
             pos_hint: {'center_x': .5, 'center_y': .5}
 
 <ImageArea@FloatLayout>:
     Image:
         source: 'GUI/Images/runescapeImage.png'
-<<<<<<< HEAD
         size_hint: (1, 1)
         pos_hint: {'center_x': .5, 'center_y': .5}
-<BotListArea@FloatLayout>:
-    ScrollView:
-        pos_hint: {'center_x': .5, 'center_y': .5}
-        size_hint: (1, 1)
-=======
-        size_hint: (.3, .3)
-        pos_hint: {'center_x': .5, 'center_y': .9}
 
-    ScrollView:
-        pos_hint: {'center_x': .5, 'center_y': .6}
-        size_hint: (.7, .3)
->>>>>>> master
-        canvas.before:
-            Color:
-                rgba: 255, 255, 255, 1
-            Line:
-                width: 2
-                rectangle: self.x, self.y, self.width, self.height
+<BotListArea>:
+    size_hint: (1,1)
+    pos_hint: {'center_x': .5, 'center_y': .5}
 
-<StartBotArea@FloatLayout>:
+<StartBotArea>:
     Label:
         id: inputLabel
         text: "Input Display #"
-        pos_hint: {'center_x': .25, 'center_y': .65}
-        size_hint: (.2, .2)
+        pos_hint: {'center_x': .25, 'center_y': .7}
+        size_hint: (.25, .3)
 
     TextInput:
         id: botnumInput
-        pos_hint: {'center_x': .75, 'center_y': .65}
-        size_hint: (.2, .2)
+        pos_hint: {'center_x': .75, 'center_y': .7}
+        size_hint: (.5, .3)
         
 
     Button:
         text: "Start Bot"
-        pos_hint: {'center_x': .5, 'center_y': .35}
+        pos_hint: {'center_x': .5, 'center_y': .25}
         size_hint: (None, None)
         size: self.texture_size
         padding: (dp(5),dp(5))
         on_release:
             app.startBot()
-
-    # Label:
-    #     id: success
-    #     text: "The bot has successfully started"
-    #     visible: False
-    #     opacity: 1 if self.visible else 0
-    #     color: utils.get_color_from_hex('#228B22')
-    #     pos_hint: {'center_x': .5, 'center_y': .1}
-
-    # Label:
-    #     id: failure
-    #     text: "The bot ran into an issue consulte with hacker Sam"
-    #     visible: False
-    #     opacity: 1 if self.visible else 0
-    #     color: utils.get_color_from_hex('#FF0000')
-    #     pos_hint: {'center_x': .5, 'center_y': .1}
 
 <SecondWindow>:
     name: 'second'
@@ -105,7 +76,7 @@
         size_hint: (.2, .1)
         pos_hint: {'center_x': .8, 'center_y': .7}
         on_release:
-            root.killBot()
+            app.killBot()
     
     Button:
         text: "Back"
@@ -122,44 +93,59 @@
         pos_hint: {'center_x': .25, 'center_y': .95}
         size_hint: (.3, .6)
 
-    Label:
+    ScrollView:
         pos_hint: {'center_x': .25, 'center_y': .6}
         size_hint: (.3, .6)
-        canvas.before:
-            Color:
-                rgba: .5, .5, .5, 1
-            Line:
-                width: 2
-                rectangle: self.x, self.y, self.width, self.height
+        GridLayout:
+            id: taskList
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            size_hint: (1, 1)
+            cols: 1
+            canvas.before:
+                Color:
+                    rgba: .5, .5, .5, 1
+                Line:
+                    width: 2
+                    rectangle: self.x, self.y, self.width, self.height
 
     Label:
         text: "Selected tasks:"
         pos_hint: {'center_x': .75, 'center_y': .95}
         size_hint: (.3, .6)
 
-    Label:
+    ScrollView:
         pos_hint: {'center_x': .75, 'center_y': .6}
         size_hint: (.3, .6)
-        canvas.before:
-            Color:
-                rgba: .5, .5, .5, 1
-            Line:
-                width: 2
-                rectangle: self.x, self.y, self.width, self.height
+        GridLayout:
+            id: selectedTasks
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            size_hint: (1, 1)
+            cols: 1
+            canvas.before:
+                Color:
+                    rgba: .5, .5, .5, 1
+                Line:
+                    width: 2
+                    rectangle: self.x, self.y, self.width, self.height
 
     Button:
         text: "Cancel"
-        pos_hint: {'center_x': .3, 'center_y': .2}
+        pos_hint: {'center_x': .25, 'center_y': .2}
         size_hint: (.2, .1)
-        on_release:
+        on_press:
             root.cancelButton()
 
     Button:
         text: "Confirm"
-        pos_hint: {'center_x': .7, 'center_y': .2}
+        pos_hint: {'center_x': .75, 'center_y': .2}
         size_hint: (.2, .1)
-        on_release:
+        on_press:
             root.confirmButton()
+
+    TextInput:
+        id: params
+        pos_hint: {'center_x': .75, 'center_y': .1}
+        size_hint: (.2, .05)
 
 <FourthWindow>:
     name: 'fourth'
@@ -184,6 +170,11 @@
         id: password
         size_hint: (.2, .1)
         pos_hint: {'center_x': .65, 'center_y': .7}
+
+    TextInput:
+        id: world
+        size_hint: (.2, .1)
+        pos_hint: {'center_x': .5, 'center_y': .35}
 
     
     Button:

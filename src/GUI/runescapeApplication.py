@@ -1,9 +1,12 @@
 import kivy
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
 from kivy.config import Config
 from kivy.lang import Builder
 from kivy.app import App
@@ -20,217 +23,131 @@ Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 kv = Builder.load_file('/git/runescapebot/src/GUI/runescape.kv')
 
-class BotListArea(Widget):
+class BotListArea(ScrollView):
     def __init__(self, **kwargs):
         super(BotListArea, self).__init__(**kwargs)
-        self.app = App.get_running_app()
-        self.bots = self.app.master.bots
-        self.buttons = dict()
-        
+        self.layout = GridLayout(
+            cols=1, 
+            spacing=10, 
+            size_hint=(1,1), 
+            pos_hint={'center_x': .5, 'center_y': .5}
+        )
+        self.layout.bind(minimum_height=self.layout.setter('height'))
+        self.add_widget(self.layout)
+       
+    def refreshBots(self,bots):
+        self.layout.clear_widgets()
 
-    def refreshBots(self):
-        
-        pass
+        def callback(instance):
+            botnum = int(instance.text.split(" ")[1])
+            App.get_running_app().selectBot(botnum)
+            getSecondWindow()
 
-class StartBotArea(FloatLayout):
+        for b in bots:
+            label = "Bot "+str(b)
+            btn = Button(text=label, size_hint=(1,1))
+            btn.bind(on_press=callback)
+            self.layout.add_widget(btn)
+
+class StartBotArea(FloatLayout):    
     def __init__(self, **kwargs):
         super(StartBotArea, self).__init__(**kwargs)
         self.app = App.get_running_app()
 
-    def test(self):
-        print(kv)
-
-
-
 class MainWindow(Screen):
     def __init__(self, **kwargs):
         super(MainWindow, self).__init__(**kwargs)
-        self.app = App.get_running_app()
-        #TODO change these to dicts
-        self.bots = dict()
-        self.currentLabels = dict()
-        self.botBoolean = True
 
-    def getBots(self):
-        
-        app = App.get_running_app()
-        bots = app.master.bots
-
-        def callback(instance):
-            if int(instance.id) in self.bots:
-                global selectedBot
-                selectedBot = instance.id
-                print("you clicked on " + str(instance.id))
-                getSecondWindow()
-
-        self.y = .7
-        self.x = .2
-
-        for i in bots:
-            self.bots[i] = i
-            label = "Bot "+str(i)
-
-            if self.y > .4:
-                i = Button(text = label, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                i.bind(on_press=callback)
-                self.currentLabels.append(i)
-                self.add_widget(i)
-                self.y -= .1
-
-            elif self.y <= .4:
-                self.y = .7
-                self.x = self.x + .1
-                i = Button(text = label, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                i.bind(on_press=callback)
-                self.currentLabels.append(i)
-                self.add_widget(i)
-                self.y -=.1
-
-        print(self.currentLabels)
-
-    #not using currently but can be used to refresh the bot list
-    #possibly could make this automatic
-    def refreshList(self):
-        if self.currentLabels != []:
-            for x in self.currentLabels:
-                self.remove_widget(x)
-
-            for n in self.currentLabels:
-                self.currentLabels.remove(n)
-        
-        self.getBots()
-
-    #This will be where we launch the bot to go do its tasks it was given
-    def startBot(self):
-        print(kv)
-        self.inputDisplay = self.ids.inputDisplay.text
-
-        app = App.get_running_app()
-        app.master.startBot(int(self.inputDisplay))
-
-        # self.app.master.startBot(int(self.inputDisplay))
-
-        print("started bot on input display #" + str(self.inputDisplay))
-        if self.botBoolean == True:
-            self.ids.success.visible = True
-            self.ids.failure.visible = False
-        if self.botBoolean == False:
-            self.ids.failure.visible = True
-            self.ids.success.visible = False
-        self.refreshList()
+    def on_enter(self):
+        App.get_running_app().refreshBots()
 
 class SecondWindow(Screen):
     def __init__(self, **kwargs):
         super(SecondWindow, self).__init__(**kwargs)
 
-    #function to kill the bot
-    #TODO Implement killing bot
-    def killBot(self):
-        global selectedBot
-
-        app = App.get_running_app()
-        app.master.killBot(int(selectedBot))
-        
-        self.deadBot = Label(text = (selectedBot + " has been killed"), pos_hint = {'center_y': .4, 'center_x': .5}, size_hint = (.2, .2))
-        self.add_widget(self.deadBot)
-        s = app.sm.get_screen('main')
-
-        s.bots.remove(int(selectedBot))
-        s.remove_widget(selectedBot)       
-
-
 class ThirdWindow(Screen):
     def __init__(self, **kwargs):
         super(ThirdWindow, self).__init__(**kwargs)
-        self.taskList = utils.getAllTaskNames() + utils.getAllGroupNames()
-        self.taskWidgets = []
-        self.selectedTasks = []
-        self.selectedTaskWidgets = []
-        self.getTasks()
 
-    def getTasks(self):
-        for y in self.taskWidgets:
-            self.remove_widget(y)
+        self.taskNames = utils.getAllTaskNames()
+        self.groupNames = utils.getAllGroupNames()
 
-        def callback(instance):
-            if instance.id in self.taskList:
-                taskSelected = str(instance.id)
-                self.remove_widget(instance)
-                self.selectedTasks.append(taskSelected)
-                self.taskList.remove(instance.id)
-                self.getSelectedTasks()
-                self.getTasks()
-                print("you clicked on " + str(instance.id))
+        self.selectedTask = None
+        self.isTask = None
 
-        self.y = .85
-        self.x = .14
-        for i in self.taskList: 
-            if self.y > .35:
-                i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                self.taskWidgets.append(i)
-                i.bind(on_press = callback)
-                self.add_widget(i)
-                self.y -= .05
+        self.params = self.ids.params
+        self.taskList = self.ids.taskList
+        self.selectedTasks = self.ids.selectedTasks
 
-            elif self.y < .35:
-                self.y = .85
-                self.x = self.x + .1
-                i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                self.taskWidgets.append(i)
-                i.bind(on_press = callback)
-                self.add_widget(i)
-                self.y -=.05
+        self.taskList.bind(minimum_height=self.taskList.setter('height'))
+        self.selectedTasks.bind(minimum_height=self.selectedTasks.setter('height'))
 
-    def getSelectedTasks(self):
-        self.y = .85
-        self.x = .64
-        for x in self.selectedTaskWidgets:
-            self.remove_widget(x)
+        self.refreshTasks()
+
+    def refreshTasks(self):
 
         def callback(instance):
-            if instance.id in self.selectedTasks:
-                print("you clicked on: " + str(instance.id))
-                self.selectedTasks.remove(instance.id)
-                self.taskList.append(instance.id)
-                self.getSelectedTasks()
-                self.getTasks()
+            if instance.text.startswith("t"):
+                name = instance.text.split(":")[1]
+                self.selectedTask = name
+                self.isTask = True
 
-        for i in self.selectedTasks:
-            if self.y > .35:
-                i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                self.selectedTaskWidgets.append(i)
-                i.bind(on_press = callback)
-                self.add_widget(i)
-                self.y -= .05
-            elif self.y < .35:
-                self.y = .85
-                self.x = self.x + .1
-                i = Button(text = i, size_hint =(.05, .05), pos_hint = {'center_y': self.y, 'center_x': self.x}, background_color =(0, 0, 0, 0), id = str(i))
-                self.selectedTaskWidgets.append(i)
-                i.bind(on_press = callback)
-                self.add_widget(i)
-                self.y -=.05
+            elif instance.text.startswith("g"):
+                name = instance.text.split(":")[1]
+                self.selectedTask = name
+                self.isTask = False
 
-            print(self.selectedTasks)
+            self.refreshTasks()
 
-    def cancelButton(self):
-        for x in self.selectedTaskWidgets:
-            self.remove_widget(x)
+        self.taskList.clear_widgets()
 
-        for y in self.taskWidgets:
-            self.remove_widget(y)
+        for t in self.taskNames:
+            self.taskList.add_widget(Button(
+                    text="t:"+str(t),
+                    size_hint=(1,1),
+                    on_press=callback
+            ))
 
-        self.selectedTasks = []
-        self.taskList = []
-        self.selectedTaskWidgets = []
-        self.taskWidgets = []
-        self.getTasks()
-        self.getSelectedTasks()
-        getSecondWindow()
+        for g in self.groupNames:
+            self.taskList.add_widget(Button(
+                    text="g:"+str(g),
+                    size_hint=(1,1),
+                    on_press=callback
+            ))
+
+        if self.selectedTask: 
+            self.selectedTasks.clear_widgets()
+            self.selectedTasks.add_widget(Button(text=self.selectedTask,size_hint=(1,1)))
 
     def confirmButton(self):
         #this is where we would send the task or task loop to the bot 
+        p = self.params.text
+        if p == '':
+            p = []
+        else:
+            p = p.split(",")
+        print(p)
+        
+        if(self.isTask):
+            App.get_running_app().giveTask(self.selectedTask, p)
+        else:
+            App.get_running_app().giveGroup(self.selectedTask)
+
+        
+
+        self.clearData()
         getMainWindow()
+
+    def cancelButton(self):
+        self.clearData()
+        getSecondWindow()
+
+    def clearData(self):
+        self.params.text = ""
+        self.selectedTasks.clear_widgets()
+        self.selectedTask = None
+        self.isTask = None
+    
  
 
 class FourthWindow(Screen):
@@ -238,40 +155,33 @@ class FourthWindow(Screen):
         super(FourthWindow, self).__init__(**kwargs)
         self.getPassword = 'password'
         self.getUsername = 'username'
+        self.getWorld = 'world'
         self.ids.username.text = self.getUsername
         self.ids.password.text = self.getPassword
-
-    def loginChange(self):
-        pass
+        self.ids.world.text = self.getWorld
 
     def confirmButton(self):
         #pass the information over
+        u = self.ids.username.text
+        p = self.ids.password.text 
+        w = self.ids.world.text
+        App.get_running_app().changeLogin(u,p,w)
         getSecondWindow()
 
     def cancelButton(self):
         getSecondWindow()
 
- 
-
 def getMainWindow():
-    app = App.get_running_app()
-    print('here')
-    app.sm.current = 'main'
+    App.get_running_app().sm.current = 'main'
 
 def getSecondWindow():
-    app = App.get_running_app()
-    print('here1')
-    app.sm.current = 'second'
+    App.get_running_app().sm.current = 'second'
 
 def getThirdWindow():
-    app = App.get_running_app()
-    print('here2')
-    app.sm.current = 'third'
+    App.get_running_app().sm.current = 'third'
 
 def getFourthWindow():
-    app = App.get_running_app()
-    print('here3')
-    app.sm.current = 'fourth'
+    App.get_running_app().sm.current = 'fourth'
 
 class Controller(App):
     def build(self):
@@ -280,15 +190,10 @@ class Controller(App):
         #this names the different screens so you can switch between them 
         self.sm = ScreenManager()
         self.sm.add_widget(MainWindow(name = 'main'))
-
-
-
-
         self.sm.add_widget(SecondWindow(name='second'))
         self.sm.add_widget(ThirdWindow(name='third'))
         self.sm.add_widget(FourthWindow(name = 'fourth'))
         
-
         return self.sm
 
     def setMaster(self, master):
@@ -297,9 +202,37 @@ class Controller(App):
     def getMaster(self):
         return self.master
 
+    def selectBot(self, num):
+        self.selectedBot = num
+
+    def giveTask(self,t, p):
+        self.master.giveTask(self.selectedBot, t, p)
+
+    def giveGroup(self, g):
+        self.master.giveGroup(self.selectedBot, g)
+
     def startBot(self):
-        print(self.sm.screens[0].ids['start'].ids['botnumInput'].text)
-        # self.master.startBot(2)
+        input = str(self.sm.screens[0].ids['start'].ids['botnumInput'].text)
+        startNum = int()
+        
+        if "," in input:
+            num = int(input.split(",")[0])
+            numBots = int(input.split(",")[1])
+            self.master.startBots(num, numBots)
+        else:
+            self.master.startBot(int(input))
+        self.refreshBots()
+
+    def refreshBots(self):
+        self.sm.screens[0].ids['botlist'].refreshBots(self.master.bots)
+
+    def killBot(self):
+        self.master.killBot(self.selectedBot)
+        getMainWindow()
+
+    def changeLogin(self, username, password, world):
+        self.master.changeLogin(self.selectedBot, username, password, world)
+        
 
 def create(master):
     app = Controller()

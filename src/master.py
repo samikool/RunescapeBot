@@ -126,10 +126,16 @@ class Master:
         self.outputs[i].put('task')
         self.outputs[i].put(t)
 
-    def giveTaskGroup(self, i, groupName,):
+    def giveGroup(self, i, groupName,):
         g = utils.getTaskGroup(groupName)
         self.outputs[i].put('group')
         self.outputs[i].put(g)
+
+    def changeLogin(self, i, u, p, w):
+        self.outputs[i].put('changelogin')
+        self.outputs[i].put(u)
+        self.outputs[i].put(p)
+        self.outputs[i].put(w)
 
     #function will start multiple bots starting at s display and ending at num-1 display
     def startBots(self,s,num):

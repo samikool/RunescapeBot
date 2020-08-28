@@ -44,6 +44,12 @@ class BotClient:
                 g = self.inQ.get()
                 self.startTaskGroupThread(g)
             
+            elif(msg == 'changelogin'):
+                u = self.inQ.get()
+                p = self.inQ.get()
+                w = self.inQ.get()
+                self.account = (u,p,w)                
+
             elif(msg == 'interrupt'):
                 pass
             #for now there is not a good way to stop a task
