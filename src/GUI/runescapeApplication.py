@@ -11,12 +11,9 @@ from kivy.config import Config
 from kivy.lang import Builder
 from kivy.app import App
 from kivy.graphics import *
-from kivy.properties import ObjectProperty
-from kivy.uix.widget import Widget
 
 import sys
 sys.path.append('..')
-
 import utils
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
@@ -132,8 +129,6 @@ class ThirdWindow(Screen):
             App.get_running_app().giveTask(self.selectedTask, p)
         else:
             App.get_running_app().giveGroup(self.selectedTask)
-
-        
 
         self.clearData()
         getMainWindow()
