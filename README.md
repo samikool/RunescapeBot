@@ -1,5 +1,4 @@
 # RunescapeBot
-## Overview
 This python project is essentially a botting master/client for OSRS. It uses Yolov3 object detection along with more primitive methods to automate repetitive tasks in Runescape. The end goal of this code base will be to provide a master that can control many intances of a botclient. The botclient will then handle all of its own controlling and decision making when it comes to executing tasks. 
 
 ## Tech
